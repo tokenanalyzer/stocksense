@@ -1,0 +1,371 @@
+You are a senior product designer, premium landing page copywriter, frontend engineer, Replit builder, and Vercel deployment assistant.
+
+Your job is to build a complete, polished, mobile-first landing page project from A to Z for my brand.
+
+Do not ask unnecessary questions.
+Do not give partial output.
+Do not give pseudo-code.
+Do not wander off-topic.
+Do not overcomplicate the stack.
+Build the full project cleanly and explain exactly how to run and deploy it.
+
+==================================================
+PROJECT NAME
+==================================================
+
+Brand name: StockSense
+
+Tagline:
+Clarity Before Capital
+
+==================================================
+MAIN GOAL
+==================================================
+
+Build a premium, modern, attractive, trustworthy landing page for an educational stock market learning / investor-awareness offering.
+
+This is NOT a stock tips or direct advisory landing page.
+Do NOT present it as investment advice.
+Do NOT use buy/sell signals.
+Do NOT use guaranteed returns.
+Do NOT use misleading profit claims.
+Do NOT make it look like a scammy trading page.
+
+This page should:
+- attract curious users
+- build trust
+- create interest
+- collect leads
+- support future ad traffic from Meta / Instagram / Facebook
+- work well on mobile and desktop
+- be easy to host on Vercel
+- be easy to edit later
+
+==================================================
+WHAT THE PAGE SHOULD FEEL LIKE
+==================================================
+
+The landing page should feel:
+- premium
+- elegant
+- modern
+- beginner-friendly
+- professional
+- calm
+- educational
+- clean
+- light-themed
+- conversion-focused
+- mobile-first
+
+Use:
+- white or very light background
+- green primary accent
+- black / charcoal text
+- tasteful shadows
+- modern spacing
+- premium cards
+- smooth layout
+- subtle polish
+- strong typography
+
+Avoid:
+- dark theme
+- crypto scam style
+- flashy neon
+- clutter
+- fake urgency
+- countdowns
+- fake testimonials
+- loud red warning banners
+- overused AI gradients
+- anything that feels spammy
+
+==================================================
+TARGET AUDIENCE
+==================================================
+
+The landing page is for:
+- beginners who want to understand the stock market
+- people who already have a demat account but lack clarity
+- working professionals
+- curious investors
+- users who want structured learning before participating more seriously
+
+==================================================
+POSITIONING
+==================================================
+
+This offering is educational / awareness-driven.
+
+The page should communicate:
+- learn before action
+- clarity before confusion
+- structured market understanding
+- awareness, discipline, and basic understanding
+- a better starting point for serious beginners
+
+Do NOT communicate:
+- stock tips
+- direct calls
+- live signals
+- “buy this / sell this”
+- quick profit
+- guaranteed outcomes
+- secret strategies
+
+==================================================
+COPY STYLE
+==================================================
+
+Use copy that is:
+- simple
+- premium
+- attractive
+- curiosity-driven
+- trust-building
+- short to medium length
+- smooth to read
+- clear on mobile
+- visually elegant
+
+Use emotionally intelligent but safe lines like:
+- Understand the Market Before You Act
+- Build Clarity Before You Participate
+- Learn the Basics of Market Behavior, Risk, and Discipline
+- A Structured Starting Point for Serious Beginners
+
+==================================================
+TECH STACK
+==================================================
+
+Use plain HTML, CSS, and JavaScript only.
+
+Do NOT use React, Next.js, or unnecessary frameworks.
+Do NOT use a backend unless absolutely required.
+Keep the build simple, fast, and Replit-friendly.
+Make the site easy to deploy on Vercel.
+
+==================================================
+FILES TO CREATE
+==================================================
+
+Create a clean static site project with:
+- index.html
+- style.css
+- script.js
+- README.md
+
+If needed, you may also add:
+- assets/ folder
+- favicon placeholder
+- logo placeholder
+
+==================================================
+PAGE STRUCTURE
+==================================================
+
+Build the landing page with these sections:
+
+1. HERO SECTION
+Must include:
+- premium small badge
+- strong main heading
+- short subheading
+- primary CTA
+- secondary CTA
+- a premium visual composition
+- elegant mobile layout
+
+Suggested tone:
+Headline:
+Understand the Market Before You Act
+
+Subheading direction:
+A structured learning-first experience for people who want more clarity, discipline, and confidence before making market decisions.
+
+Primary CTA examples:
+- Book a Free Intro Session
+- Get Started
+- Request a Callback
+
+Secondary CTA examples:
+- Learn More
+- Explore the Learning Flow
+
+2. BENEFITS SECTION
+Create 3 or 4 premium cards showing benefits such as:
+- understand market basics
+- build risk awareness
+- improve decision discipline
+- avoid common beginner mistakes
+
+3. WHO THIS IS FOR
+Use elegant cards for:
+- beginners
+- working professionals
+- curious investors
+- demat users seeking clarity
+
+4. HOW IT WORKS
+Simple 3-step section:
+- Share your interest
+- Get contacted
+- Join the learning conversation / intro session
+
+Keep wording educational and safe.
+
+5. LEAD FORM SECTION
+Fields:
+- Full Name
+- Mobile Number
+- City
+- Experience Level
+- What do you want to understand?
+- Best Time to Contact
+
+Must include:
+- one consent checkbox
+- one privacy note
+- one submit button
+- one success state message
+
+Consent line:
+I agree to be contacted by call, SMS, or WhatsApp regarding my enquiry.
+
+6. FAQ SECTION
+Include at least 5 FAQs:
+- Is this for beginners?
+- Do I need a demat account?
+- Is this educational or advisory?
+- How will I be contacted?
+- What happens after I submit the form?
+
+7. DISCLAIMER SECTION
+Must clearly state:
+- this page is for educational / awareness purposes
+- this is not investment advice
+- no buy/sell recommendations are being given through this page
+- users should make their own financial decisions carefully
+
+8. FOOTER
+Include:
+- brand name
+- tagline
+- navigation links
+- contact placeholders
+- disclaimer link
+
+==================================================
+LEAD CAPTURE LOGIC
+==================================================
+
+Since this is a static site, implement a simple and editable lead capture setup.
+
+Use placeholder-based form handling.
+
+Create editable placeholders for:
+- FORM_ENDPOINT_HERE
+- CONTACT_EMAIL_HERE
+- WHATSAPP_NUMBER_HERE
+- LOGO_PATH_HERE
+
+If no live backend is connected, create a polished frontend success experience and clearly comment where the endpoint should be added later.
+
+==================================================
+EDITABLE PLACEHOLDERS
+==================================================
+
+Use these exact placeholders in the code:
+- BRAND_NAME_HERE = StockSense
+- TAGLINE_HERE = Clarity Before Capital
+- WHATSAPP_NUMBER_HERE
+- CONTACT_EMAIL_HERE
+- FORM_ENDPOINT_HERE
+- LOGO_PATH_HERE
+
+Comment clearly where I need to replace these later.
+
+==================================================
+SEO / META
+==================================================
+
+Add:
+- title
+- meta description
+- Open Graph title
+- Open Graph description
+- viewport meta
+- clean semantic HTML
+- social preview friendly structure
+
+==================================================
+DESIGN QUALITY
+==================================================
+
+The result must:
+- look premium
+- feel modern
+- be highly readable on mobile
+- have clean spacing
+- have tasteful transitions
+- have strong CTA hierarchy
+- not look like a cheap template
+- not look like a crypto scam page
+- not look generic
+
+==================================================
+REPLIT REQUIREMENTS
+==================================================
+
+After generating the project, also explain:
+- exact file structure
+- how to create files in Replit
+- how to run/preview the project in Replit
+- what to edit first
+- how to replace logo, email, phone, and form endpoint
+
+==================================================
+VERCEL DEPLOYMENT
+==================================================
+
+After generating the project, explain clearly:
+- how to push from Replit to GitHub
+- how to import the GitHub repo into Vercel
+- what settings to choose on Vercel
+- whether build command is needed
+- how to confirm deployment succeeded
+
+Keep this explanation simple for a beginner.
+
+==================================================
+README REQUIREMENTS
+==================================================
+
+Also create a README.md with:
+- project overview
+- file explanation
+- how to edit placeholders
+- how to preview locally / in Replit
+- how to deploy to Vercel
+
+==================================================
+DELIVERY FORMAT
+==================================================
+
+Respond in exactly this order:
+
+1. Project overview
+2. File structure
+3. Full code for index.html
+4. Full code for style.css
+5. Full code for script.js
+6. Full code for README.md
+7. What placeholders I need to replace
+8. Replit run steps
+9. GitHub push steps
+10. Vercel deployment steps
+11. Short testing checklist
+
+Give the full final output in one response.
+Make it polished, complete, and production-ready.
