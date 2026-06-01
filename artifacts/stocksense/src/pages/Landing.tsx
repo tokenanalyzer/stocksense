@@ -6,7 +6,7 @@ import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
   CheckCircle2, BookOpen, ShieldCheck, Target, AlertTriangle,
   ArrowRight, UserCheck, LayoutList, TrendingUp, Star,
-  ChevronRight, Lightbulb, Users, Clock
+  ChevronRight, Lightbulb, Users, Clock, Loader2, AlertCircle
 } from "lucide-react";
 import stockSenseLogo from "@assets/file_000000001d8871fa822307813ae000a5_1780324458986.png";
 
@@ -24,6 +24,28 @@ import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger
 } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
+
+/* ─── Google Apps Script endpoint ─────────────────────────────────────────── */
+const APPS_SCRIPT_URL = import.meta.env.VITE_APPS_SCRIPT_URL as string | undefined;
+
+async function submitLead(values: Record<string, unknown>): Promise<void> {
+  if (!APPS_SCRIPT_URL) {
+    // Dev fallback: log and treat as success so the gate still unlocks during testing
+    console.warn("VITE_APPS_SCRIPT_URL not set — skipping network call.");
+    console.log("Lead payload:", values);
+    return;
+  }
+  const res = await fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    // Apps Script Web Apps don't support application/json from cross-origin without CORS preflight issues;
+    // sending as text/plain avoids the preflight while still letting us JSON.parse on the server side.
+    headers: { "Content-Type": "text/plain" },
+    body: JSON.stringify(values)
+  });
+  if (!res.ok) throw new Error(`Network error: ${res.status}`);
+  const json = await res.json() as { success: boolean; error?: string };
+  if (!json.success) throw new Error(json.error ?? "Submission failed");
+}
 
 /* ─── Form schema (shared by popup + inline form) ─────────────────────────── */
 const formSchema = z.object({
@@ -50,10 +72,12 @@ const stagger = {
 };
 
 /* ─── Shared lead form fields ──────────────────────────────────────────────── */
-function LeadFormFields({ form, onSubmit, submitLabel = "Request My Free Session" }: {
+function LeadFormFields({ form, onSubmit, submitLabel = "Request My Free Session", isSubmitting = false, submitError }: {
   form: ReturnType<typeof useForm<FormValues>>;
   onSubmit: (v: FormValues) => void;
   submitLabel?: string;
+  isSubmitting?: boolean;
+  submitError?: string;
 }) {
   return (
     <Form {...form}>
@@ -163,12 +187,24 @@ function LeadFormFields({ form, onSubmit, submitLabel = "Request My Free Session
           </FormItem>
         )} />
 
+        {submitError && (
+          <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <span>{submitError}</span>
+          </div>
+        )}
+
         <Button
           type="submit"
-          className="w-full h-12 text-base font-semibold bg-green-600 hover:bg-green-700 text-white shadow-md shadow-green-200 transition-all"
+          disabled={isSubmitting}
+          className="w-full h-12 text-base font-semibold bg-green-600 hover:bg-green-700 text-white shadow-md shadow-green-200 transition-all disabled:opacity-70"
           data-testid="button-submit-form"
         >
-          {submitLabel} <ArrowRight className="ml-2 h-4 w-4" />
+          {isSubmitting ? (
+            <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting…</>
+          ) : (
+            <>{submitLabel} <ArrowRight className="ml-2 h-4 w-4" /></>
+          )}
         </Button>
         <p className="text-xs text-center text-slate-400">
           Your information is private and will never be shared with third parties.
@@ -212,7 +248,9 @@ function SuccessState({ onReset }: { onReset?: () => void }) {
 const SESSION_KEY = "stocksense_lead_submitted";
 
 function LeadGate({ onUnlock }: { onUnlock: () => void }) {
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted]     = useState(false);
+  const [isSubmitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | undefined>();
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: { fullName: "", mobile: "", city: "", experience: "", intent: "", contactTime: "", consent: false }
@@ -225,11 +263,19 @@ function LeadGate({ onUnlock }: { onUnlock: () => void }) {
     return () => { document.body.style.overflow = prev; };
   }, []);
 
-  function handleSubmit(values: FormValues) {
-    // TODO: replace with real form endpoint — POST values to FORM_ENDPOINT_HERE
-    console.log("Lead captured:", values);
-    sessionStorage.setItem(SESSION_KEY, "1");
-    setSubmitted(true);
+  async function handleSubmit(values: FormValues) {
+    setSubmitting(true);
+    setSubmitError(undefined);
+    try {
+      await submitLead({ ...values, timestamp: new Date().toISOString() });
+      sessionStorage.setItem(SESSION_KEY, "1");
+      setSubmitted(true);
+    } catch (err) {
+      setSubmitError("Something went wrong. Please try again or refresh the page.");
+      console.error("Lead submission error:", err);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -278,7 +324,7 @@ function LeadGate({ onUnlock }: { onUnlock: () => void }) {
           {submitted ? (
             <SuccessState onReset={onUnlock} />
           ) : (
-            <LeadFormFields form={form} onSubmit={handleSubmit} submitLabel="Submit & Access the Page" />
+            <LeadFormFields form={form} onSubmit={handleSubmit} submitLabel="Submit & Access the Page" isSubmitting={isSubmitting} submitError={submitError} />
           )}
         </div>
       </motion.div>
@@ -324,16 +370,26 @@ export default function Landing() {
 
   // Inline page form state
   const [pageFormSubmitted, setPageFormSubmitted] = useState(false);
+  const [pageSubmitting, setPageSubmitting]       = useState(false);
+  const [pageSubmitError, setPageSubmitError]     = useState<string | undefined>();
   const pageForm = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: { fullName: "", mobile: "", city: "", experience: "", intent: "", contactTime: "", consent: false }
   });
-  function handlePageSubmit(values: FormValues) {
-    // TODO: replace with real form endpoint — POST values to FORM_ENDPOINT_HERE
-    console.log("Page form submitted:", values);
-    sessionStorage.setItem(SESSION_KEY, "1");
-    setPageFormSubmitted(true);
-    setLeadSubmitted(true);
+  async function handlePageSubmit(values: FormValues) {
+    setPageSubmitting(true);
+    setPageSubmitError(undefined);
+    try {
+      await submitLead({ ...values, timestamp: new Date().toISOString() });
+      sessionStorage.setItem(SESSION_KEY, "1");
+      setPageFormSubmitted(true);
+      setLeadSubmitted(true);
+    } catch (err) {
+      setPageSubmitError("Something went wrong. Please try again.");
+      console.error("Page form submission error:", err);
+    } finally {
+      setPageSubmitting(false);
+    }
   }
 
   return (
@@ -676,7 +732,7 @@ export default function Landing() {
                     <>
                       <h3 className="text-2xl font-bold text-slate-900 mb-1">Request an Intro Session</h3>
                       <p className="text-slate-500 text-sm mb-6">Fill in your details below — takes less than a minute.</p>
-                      <LeadFormFields form={pageForm} onSubmit={handlePageSubmit} submitLabel="Request My Session" />
+                      <LeadFormFields form={pageForm} onSubmit={handlePageSubmit} submitLabel="Request My Session" isSubmitting={pageSubmitting} submitError={pageSubmitError} />
                     </>
                   )}
                 </motion.div>
