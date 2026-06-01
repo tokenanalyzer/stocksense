@@ -1,0 +1,80 @@
+Redesign this project completely as a lead-first landing funnel, not a normal open landing page.
+
+Current problem:
+The page opens directly into the website content, and the lead form appears later inside the page. This is weak for conversion because users can scroll, inspect, and leave without submitting their details first.
+
+I want a stronger lead-capture flow.
+
+New required behavior:
+1. As soon as the site opens, show a premium lead form popup/modal at the top.
+2. The popup must appear automatically on page load.
+3. The page content behind it should be visible but slightly dimmed / blurred.
+4. The popup should feel premium, modern, mobile-friendly, and high-converting.
+5. The first goal is lead capture.
+6. Only after the user submits the form should the site continue normally.
+7. The popup must not feel ugly, spammy, or low quality.
+8. The popup should be visually better than the current form section.
+9. The rest of the site also needs redesign because it currently feels plain, weak, and not premium enough.
+
+Lead popup requirements:
+- headline: Request an Intro Session
+- short supporting line
+- fields:
+  - Full Name
+  - Mobile Number
+  - City
+  - Experience Level
+  - Best Time to Contact
+  - What do you want to understand?
+- one consent checkbox
+- one strong submit button
+- polished success state
+- mobile-first spacing
+- clean rounded corners
+- premium shadow
+- subtle animation on open
+- close button optional, but the form should be strongly prioritized
+
+Behavior requirement:
+- open popup automatically on first load
+- keep main site visible behind overlay
+- after successful submit, close popup and allow user to browse the site
+- optionally store a local flag so popup does not reappear immediately during same session
+- do not use annoying repeated popups
+
+Important UX goal:
+The visitor should first enter lead details, then explore the rest of the page.
+
+Full redesign requirements:
+- improve hero section strongly
+- make first screen more premium and attractive
+- improve spacing, card design, typography, CTA quality, and section rhythm
+- current site feels too basic and boring, fix that
+- make the design look professional, elegant, and conversion-focused
+- keep light theme, green accent, charcoal text
+- keep educational positioning
+- do not use scammy finance design
+- do not use dark theme
+
+Technical requirements:
+- use plain HTML, CSS, and JavaScript only
+- keep it Replit-friendly
+- keep it Vercel-friendly
+- provide full updated code for index.html, style.css, and script.js
+- do not give partial snippets
+- rewrite the project cleanly
+
+Also:
+- remove weak/plain feeling from current sections
+- make cards more premium
+- improve content hierarchy
+- improve mobile layout significantly
+
+Respond in this exact order:
+1. What is wrong with the current page
+2. Redesign approach
+3. Full updated index.html
+4. Full updated style.css
+5. Full updated script.js
+6. What changed
+7. How to test in Replit

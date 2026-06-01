@@ -1,545 +1,829 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { motion } from "framer-motion";
-import { CheckCircle2, BookOpen, ShieldCheck, Target, AlertTriangle, ArrowRight, UserCheck, LayoutList, Building2 } from "lucide-react";
+import { motion, AnimatePresence, useInView } from "framer-motion";
+import {
+  CheckCircle2, BookOpen, ShieldCheck, Target, AlertTriangle,
+  ArrowRight, UserCheck, LayoutList, TrendingUp, X, Star,
+  ChevronRight, Lightbulb, Users, Clock
+} from "lucide-react";
 import stockSenseLogo from "@assets/file_000000001d8871fa822307813ae000a5_1780324458986.png";
 
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import {
+  Form, FormControl, FormField, FormItem, FormLabel, FormMessage
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from "@/components/ui/select";
+import {
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger
+} from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
 
+/* ─── Form schema (shared by popup + inline form) ─────────────────────────── */
 const formSchema = z.object({
-  fullName: z.string().min(2, "Full name must be at least 2 characters."),
-  mobile: z.string().min(10, "Valid mobile number is required."),
-  city: z.string().min(2, "City is required."),
-  experience: z.string().min(1, "Please select your experience level."),
-  intent: z.string().min(10, "Please briefly explain what you want to understand."),
+  fullName:    z.string().min(2, "Full name must be at least 2 characters."),
+  mobile:      z.string().min(10, "Enter a valid mobile number."),
+  city:        z.string().min(2, "City is required."),
+  experience:  z.string().min(1, "Please select your experience level."),
+  intent:      z.string().min(10, "Please briefly describe what you want to learn."),
   contactTime: z.string().min(1, "Please select the best time to contact you."),
-  consent: z.boolean().refine(val => val === true, "You must agree to be contacted.")
+  consent: z.boolean().refine(v => v === true, "You must agree to be contacted.")
 });
+type FormValues = z.infer<typeof formSchema>;
 
-export default function Landing() {
-  const [isSubmitted, setIsSubmitted] = useState(false);
+/* ─── Animation presets ────────────────────────────────────────────────────── */
+const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number];
 
-  const form = useForm<z.infer<typeof formSchema>>({
+const fadeUp = {
+  hidden:  { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } }
+};
+const stagger = {
+  hidden:  { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+};
+
+/* ─── Shared lead form fields ──────────────────────────────────────────────── */
+function LeadFormFields({ form, onSubmit, submitLabel = "Request My Free Session" }: {
+  form: ReturnType<typeof useForm<FormValues>>;
+  onSubmit: (v: FormValues) => void;
+  submitLabel?: string;
+}) {
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField control={form.control} name="fullName" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-slate-700 font-medium text-sm">Full Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Rahul Sharma" className="h-11 bg-white border-slate-200 focus:border-green-400" data-testid="input-fullname" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+          <FormField control={form.control} name="mobile" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-slate-700 font-medium text-sm">Mobile Number</FormLabel>
+              <FormControl>
+                <Input placeholder="+91 98765 43210" className="h-11 bg-white border-slate-200 focus:border-green-400" data-testid="input-mobile" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </div>
+
+        <FormField control={form.control} name="city" render={({ field }) => (
+          <FormItem>
+            <FormLabel className="text-slate-700 font-medium text-sm">City</FormLabel>
+            <FormControl>
+              <Input placeholder="Mumbai, Pune, Delhi…" className="h-11 bg-white border-slate-200 focus:border-green-400" data-testid="input-city" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField control={form.control} name="experience" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-slate-700 font-medium text-sm">Experience Level</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger className="h-11 bg-white border-slate-200" data-testid="select-experience">
+                    <SelectValue placeholder="Select level" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="beginner">Complete Beginner</SelectItem>
+                  <SelectItem value="demat">Have a Demat Account</SelectItem>
+                  <SelectItem value="tried">Tried Trading</SelectItem>
+                  <SelectItem value="learning">Learning Actively</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )} />
+          <FormField control={form.control} name="contactTime" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-slate-700 font-medium text-sm">Best Time to Contact</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger className="h-11 bg-white border-slate-200" data-testid="select-contact-time">
+                    <SelectValue placeholder="Select time" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="morning">Morning (10AM – 12PM)</SelectItem>
+                  <SelectItem value="afternoon">Afternoon (1PM – 4PM)</SelectItem>
+                  <SelectItem value="evening">Evening (5PM – 7PM)</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </div>
+
+        <FormField control={form.control} name="intent" render={({ field }) => (
+          <FormItem>
+            <FormLabel className="text-slate-700 font-medium text-sm">What do you want to understand?</FormLabel>
+            <FormControl>
+              <Textarea
+                placeholder="I want to learn about long-term investing, how to read charts, avoid beginner traps…"
+                className="resize-none bg-white border-slate-200 focus:border-green-400 min-h-[80px]"
+                data-testid="textarea-intent"
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        <FormField control={form.control} name="consent" render={({ field }) => (
+          <FormItem className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 p-4">
+            <FormControl>
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={field.onChange}
+                className="mt-0.5 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                data-testid="checkbox-consent"
+              />
+            </FormControl>
+            <div className="leading-tight">
+              <FormLabel className="text-sm font-normal text-slate-600 cursor-pointer">
+                I agree to be contacted by call, SMS, or WhatsApp regarding my enquiry.
+              </FormLabel>
+              <FormMessage />
+            </div>
+          </FormItem>
+        )} />
+
+        <Button
+          type="submit"
+          className="w-full h-12 text-base font-semibold bg-green-600 hover:bg-green-700 text-white shadow-md shadow-green-200 transition-all"
+          data-testid="button-submit-form"
+        >
+          {submitLabel} <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+        <p className="text-xs text-center text-slate-400">
+          Your information is private and will never be shared with third parties.
+        </p>
+      </form>
+    </Form>
+  );
+}
+
+/* ─── Success state ────────────────────────────────────────────────────────── */
+function SuccessState({ onReset }: { onReset?: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.92 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className="flex flex-col items-center justify-center text-center py-10 px-4"
+    >
+      <div className="relative mb-6">
+        <div className="h-20 w-20 rounded-full bg-green-100 flex items-center justify-center">
+          <CheckCircle2 className="h-10 w-10 text-green-600" />
+        </div>
+        <div className="absolute -top-1 -right-1 h-6 w-6 rounded-full bg-green-500 flex items-center justify-center">
+          <Star className="h-3 w-3 text-white fill-white" />
+        </div>
+      </div>
+      <h3 className="text-2xl font-bold text-slate-900 mb-2">Request Received</h3>
+      <p className="text-slate-500 mb-8 max-w-xs leading-relaxed">
+        Our team will contact you at your preferred time. You're one step closer to market clarity.
+      </p>
+      {onReset && (
+        <Button variant="outline" size="sm" onClick={onReset} data-testid="button-submit-another" className="text-slate-600">
+          Submit another enquiry
+        </Button>
+      )}
+    </motion.div>
+  );
+}
+
+/* ─── Lead Popup Component ─────────────────────────────────────────────────── */
+const SESSION_KEY = "stocksense_lead_submitted";
+
+function LeadPopup({ onDismiss }: { onDismiss: () => void }) {
+  const [submitted, setSubmitted] = useState(false);
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      fullName: "",
-      mobile: "",
-      city: "",
-      experience: "",
-      intent: "",
-      contactTime: "",
-      consent: false
-    }
+    defaultValues: { fullName: "", mobile: "", city: "", experience: "", intent: "", contactTime: "", consent: false }
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // TODO: replace with real form endpoint
-    console.log("Form submitted:", values);
-    setIsSubmitted(true);
+  function handleSubmit(values: FormValues) {
+    // TODO: replace with real form endpoint — POST values to FORM_ENDPOINT_HERE
+    console.log("Lead captured:", values);
+    sessionStorage.setItem(SESSION_KEY, "1");
+    setSubmitted(true);
+  }
+
+  function handleSuccessClose() {
+    onDismiss();
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", backgroundColor: "rgba(15,23,42,0.55)" }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Request an intro session"
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.94, y: 20 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+        style={{ boxShadow: "0 32px 80px -12px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.04)" }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Top accent bar */}
+        <div className="h-1 w-full bg-gradient-to-r from-green-400 via-green-600 to-emerald-500 flex-shrink-0" />
+
+        {/* Header */}
+        <div className="px-6 pt-6 pb-4 flex-shrink-0">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-green-50 border border-green-100 px-3 py-1 text-xs font-semibold text-green-700 mb-3">
+                <BookOpen className="h-3 w-3" />
+                Free Intro Session
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-900 leading-tight">
+                Request an Intro Session
+              </h2>
+              <p className="text-slate-500 text-sm mt-1.5 leading-relaxed">
+                Take 60 seconds. We'll reach out at your preferred time — no pressure, no sales pitch.
+              </p>
+            </div>
+            <button
+              onClick={onDismiss}
+              className="flex-shrink-0 mt-1 h-8 w-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+              aria-label="Close"
+              data-testid="button-close-popup"
+            >
+              <X className="h-4 w-4 text-slate-500" />
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable form body */}
+        <div className="px-6 pb-6 overflow-y-auto flex-1">
+          {submitted ? (
+            <SuccessState onReset={handleSuccessClose} />
+          ) : (
+            <LeadFormFields form={form} onSubmit={handleSubmit} submitLabel="Request My Free Session" />
+          )}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+/* ─── Animated section wrapper ─────────────────────────────────────────────── */
+function FadeSection({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+  return (
+    <motion.div ref={ref} initial="hidden" animate={inView ? "visible" : "hidden"} variants={stagger} className={className}>
+      {children}
+    </motion.div>
+  );
+}
+
+/* ─── Main Landing Page ────────────────────────────────────────────────────── */
+export default function Landing() {
+  const [showPopup, setShowPopup] = useState(false);
+  const [leadSubmitted, setLeadSubmitted] = useState(false);
+
+  useEffect(() => {
+    const alreadySubmitted = sessionStorage.getItem(SESSION_KEY) === "1";
+    if (alreadySubmitted) {
+      setLeadSubmitted(true);
+      return;
+    }
+    // Small delay so the page has a moment to paint before the modal appears
+    const t = setTimeout(() => setShowPopup(true), 500);
+    return () => clearTimeout(t);
+  }, []);
+
+  function handlePopupDismiss() {
+    setShowPopup(false);
+    // Mark as submitted so inline form shows success, or just close
+  }
+
+  function handlePopupSubmitSuccess() {
+    setShowPopup(false);
+    setLeadSubmitted(true);
   }
 
   const scrollTo = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const fadeInUp = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
-  };
-
-  const staggerContainer = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
+  // Inline page form state
+  const [pageFormSubmitted, setPageFormSubmitted] = useState(false);
+  const pageForm = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { fullName: "", mobile: "", city: "", experience: "", intent: "", contactTime: "", consent: false }
+  });
+  function handlePageSubmit(values: FormValues) {
+    // TODO: replace with real form endpoint — POST values to FORM_ENDPOINT_HERE
+    console.log("Page form submitted:", values);
+    sessionStorage.setItem(SESSION_KEY, "1");
+    setPageFormSubmitted(true);
+    setLeadSubmitted(true);
+  }
 
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
-      
-      {/* Navigation */}
-      <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-slate-900 shadow-sm backdrop-blur">
-        <div className="container mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo(0,0)}>
-            <img src={stockSenseLogo} alt="StockSense" className="h-10 w-auto" />
-          </div>
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
-            <button onClick={() => scrollTo('benefits')} className="hover:text-white transition-colors" data-testid="link-benefits">Benefits</button>
-            <button onClick={() => scrollTo('audience')} className="hover:text-white transition-colors" data-testid="link-audience">Who We Are For</button>
-            <button onClick={() => scrollTo('how-it-works')} className="hover:text-white transition-colors" data-testid="link-how-it-works">How It Works</button>
-            <button onClick={() => scrollTo('faq')} className="hover:text-white transition-colors" data-testid="link-faq">FAQ</button>
-          </nav>
-          <div className="flex items-center">
-            <Button onClick={() => scrollTo('contact')} variant="default" className="hidden md:inline-flex bg-primary hover:bg-primary/90 text-primary-foreground" data-testid="button-nav-book">
-              Book a Session
+    <>
+      {/* ── Popup overlay ── */}
+      <AnimatePresence>
+        {showPopup && (
+          <LeadPopup
+            onDismiss={handlePopupDismiss}
+          />
+        )}
+      </AnimatePresence>
+
+      <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
+
+        {/* ── Navigation ── */}
+        <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-slate-900 backdrop-blur">
+          <div className="container mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
+            <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex items-center gap-2">
+              <img src={stockSenseLogo} alt="StockSense" className="h-9 w-auto" />
+            </button>
+            <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-slate-400">
+              {[["benefits", "Why Learn First"], ["audience", "Who It's For"], ["how-it-works", "How It Works"], ["faq", "FAQ"]].map(([id, label]) => (
+                <button key={id} onClick={() => scrollTo(id)} className="hover:text-white transition-colors" data-testid={`link-${id}`}>
+                  {label}
+                </button>
+              ))}
+            </nav>
+            <Button
+              onClick={() => setShowPopup(true)}
+              className="bg-green-600 hover:bg-green-700 text-white h-9 px-5 text-sm font-semibold shadow-none"
+              data-testid="button-nav-book"
+            >
+              Book Free Session
             </Button>
-            {/* Mobile menu toggle could go here if needed */}
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main>
-        {/* 1. Hero Section */}
-        <section id="hero" className="relative pt-24 pb-32 md:pt-36 md:pb-48 overflow-hidden bg-slate-50">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-green-100/50 via-transparent to-transparent pointer-events-none" />
-          
-          <div className="container mx-auto px-4 md:px-6 relative z-10 text-center">
-            <motion.div 
-              initial="hidden" animate="visible" variants={staggerContainer}
-              className="max-w-3xl mx-auto flex flex-col items-center"
-            >
-              <motion.div variants={fadeInUp}>
-                <span className="inline-flex items-center rounded-full border border-green-200 bg-green-50 px-3 py-1 text-sm font-medium text-green-700 mb-6">
-                  <BookOpen className="mr-2 h-4 w-4" /> Clarity Before Capital
-                </span>
-              </motion.div>
-              
-              <motion.h1 variants={fadeInUp} className="text-4xl md:text-6xl font-bold tracking-tight text-slate-900 mb-6 leading-tight">
-                Understand the Market <br className="hidden md:block"/> Before You Act
-              </motion.h1>
-              
-              <motion.p variants={fadeInUp} className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl">
-                We provide structured learning and market basics to curious beginners. Build a solid foundation of discipline and risk awareness before risking your hard-earned capital.
-              </motion.p>
-              
-              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row items-center gap-4">
-                <Button size="lg" onClick={() => scrollTo('contact')} className="w-full sm:w-auto h-12 px-8 text-base" data-testid="button-book-intro">
-                  Book a Free Intro Session
-                </Button>
-                <Button size="lg" variant="outline" onClick={() => scrollTo('benefits')} className="w-full sm:w-auto h-12 px-8 text-base bg-white" data-testid="button-learn-more">
-                  Learn More
-                </Button>
-              </motion.div>
-            </motion.div>
-          </div>
-        </section>
+        <main>
+          {/* ── 1. Hero ── */}
+          <section id="hero" className="relative overflow-hidden bg-white">
+            {/* Background geometry */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div className="absolute -top-32 -right-32 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-green-100/60 to-emerald-50/40" />
+              <div className="absolute -bottom-24 -left-24 w-[400px] h-[400px] rounded-full bg-gradient-to-tr from-slate-100/80 to-transparent" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-px bg-gradient-to-r from-transparent via-slate-200/60 to-transparent" />
+            </div>
 
-        {/* 2. Benefits */}
-        <section id="benefits" className="py-24 bg-white">
-          <div className="container mx-auto px-4 md:px-6">
-            <motion.div 
-              initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={staggerContainer}
-              className="text-center max-w-2xl mx-auto mb-16"
-            >
-              <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Why Start with Education?</motion.h2>
-              <motion.p variants={fadeInUp} className="text-slate-600 text-lg">A strong foundation protects you from the noise. We focus on the principles that matter.</motion.p>
-            </motion.div>
-
-            <motion.div 
-              initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={staggerContainer}
-              className="grid md:grid-cols-2 lg:grid-cols-4 gap-8"
-            >
-              {[
-                { icon: <LayoutList className="h-6 w-6 text-primary"/>, title: "Market Basics", desc: "Understand how the market actually works, away from the hype." },
-                { icon: <ShieldCheck className="h-6 w-6 text-primary"/>, title: "Risk Awareness", desc: "Learn to identify and manage risk before it manages you." },
-                { icon: <Target className="h-6 w-6 text-primary"/>, title: "Decision Discipline", desc: "Develop frameworks to make calm, rational decisions." },
-                { icon: <AlertTriangle className="h-6 w-6 text-primary"/>, title: "Avoid Mistakes", desc: "Sidestep the costly emotional traps that catch most beginners." }
-              ].map((item, i) => (
-                <motion.div key={i} variants={fadeInUp}>
-                  <Card className="h-full bg-slate-50/50 border-slate-100 hover:shadow-md transition-shadow">
-                    <CardHeader>
-                      <div className="h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center mb-4">
-                        {item.icon}
-                      </div>
-                      <CardTitle className="text-xl">{item.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-base">{item.desc}</CardDescription>
-                    </CardContent>
-                  </Card>
+            <div className="container mx-auto px-4 md:px-6 relative z-10 pt-20 pb-28 md:pt-28 md:pb-36">
+              <motion.div
+                initial="hidden" animate="visible" variants={stagger}
+                className="max-w-4xl mx-auto text-center"
+              >
+                <motion.div variants={fadeUp}>
+                  <span className="inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-4 py-1.5 text-sm font-semibold text-green-700 mb-8 shadow-sm">
+                    <TrendingUp className="h-3.5 w-3.5" />
+                    Educational Platform · Not Investment Advice
+                  </span>
                 </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        </section>
 
-        {/* 3. Who This Is For */}
-        <section id="audience" className="py-24 bg-slate-50">
-          <div className="container mx-auto px-4 md:px-6">
-            <div className="grid lg:grid-cols-2 gap-16 items-center">
-              <motion.div 
-                initial="hidden" whileInView="visible" viewport={{ once: true }} variants={staggerContainer}
-              >
-                <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold text-slate-900 mb-6">Designed for the curious, not the reckless.</motion.h2>
-                <motion.p variants={fadeInUp} className="text-lg text-slate-600 mb-8">
-                  We don't promise overnight wealth. We promise clarity. If you're looking for hot tips, this isn't for you. If you're looking for understanding, you're in the right place.
+                <motion.h1 variants={fadeUp} className="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 mb-6 leading-[1.08]">
+                  Understand the Market
+                  <br />
+                  <span className="text-green-600">Before You Act.</span>
+                </motion.h1>
+
+                <motion.p variants={fadeUp} className="text-xl md:text-2xl text-slate-500 mb-10 max-w-2xl mx-auto leading-relaxed font-light">
+                  Structured market education for curious beginners — build clarity, discipline, and confidence before risking your capital.
                 </motion.p>
-                <motion.ul variants={staggerContainer} className="space-y-6">
-                  {[
-                    { title: "Complete Beginners", desc: "Starting from zero and want a structured path." },
-                    { title: "Working Professionals", desc: "Have capital but lack the time to filter market noise." },
-                    { title: "Demat Account Holders", desc: "Opened an account but unsure of what to do next safely." }
-                  ].map((item, i) => (
-                    <motion.li key={i} variants={fadeInUp} className="flex gap-4">
-                      <div className="mt-1 bg-green-100 rounded-full p-1 h-fit">
-                        <CheckCircle2 className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-slate-900 text-lg">{item.title}</h4>
-                        <p className="text-slate-600">{item.desc}</p>
-                      </div>
-                    </motion.li>
-                  ))}
-                </motion.ul>
-              </motion.div>
-              
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.6 }}
-                className="relative"
-              >
-                <div className="aspect-square md:aspect-[4/3] rounded-2xl bg-slate-900 overflow-hidden relative shadow-2xl">
-                  <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900" />
-                  <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-                    <Building2 className="h-16 w-16 text-slate-400 mb-6 opacity-50" />
-                    <p className="text-2xl md:text-3xl font-serif text-slate-200 italic max-w-sm">"An investment in knowledge pays the best interest."</p>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          </div>
-        </section>
 
-        {/* 4. How It Works */}
-        <section id="how-it-works" className="py-24 bg-white">
-          <div className="container mx-auto px-4 md:px-6">
-            <div className="text-center max-w-2xl mx-auto mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Your Path to Clarity</h2>
-              <p className="text-slate-600 text-lg">A simple process to begin your educational journey.</p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8 relative">
-              <div className="hidden md:block absolute top-12 left-[15%] right-[15%] h-0.5 bg-slate-100 z-0" />
-              
-              {[
-                { step: "01", title: "Share Your Interest", desc: "Fill out the brief form below to let us know where you currently stand." },
-                { step: "02", title: "Get Contacted", desc: "We'll reach out at your preferred time to understand your specific needs." },
-                { step: "03", title: "Join the Conversation", desc: "Start your structured learning sessions with our market educators." }
-              ].map((item, i) => (
-                <div key={i} className="relative z-10 flex flex-col items-center text-center">
-                  <div className="h-24 w-24 rounded-full bg-white border-4 border-slate-50 shadow-sm flex items-center justify-center text-2xl font-bold text-primary mb-6">
-                    {item.step}
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-3">{item.title}</h3>
-                  <p className="text-slate-600">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* 5. Lead Capture Form */}
-        <section id="contact" className="py-24 bg-slate-900 text-slate-50 relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-green-900/20 via-transparent to-transparent pointer-events-none" />
-          
-          <div className="container mx-auto px-4 md:px-6 relative z-10">
-            <div className="grid lg:grid-cols-2 gap-16 items-start">
-              <div>
-                <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 leading-tight">Ready to build your foundation?</h2>
-                <p className="text-lg text-slate-300 mb-8 max-w-md">
-                  Take the first step towards market clarity. Book your free introductory session today.
-                </p>
-                
-                <div className="space-y-6">
-                  <div className="flex gap-4">
-                    <div className="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center shrink-0">
-                      <UserCheck className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-white">Personalized Approach</h4>
-                      <p className="text-slate-400 text-sm">We tailor our conversation to your current knowledge level.</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-4">
-                    <div className="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center shrink-0">
-                      <ShieldCheck className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-white">No Pressure, No Sales</h4>
-                      <p className="text-slate-400 text-sm">This is an educational discovery call, not a pitch for trading tools.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl p-6 md:p-10 text-slate-900 shadow-xl">
-                {isSubmitted ? (
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-                    className="flex flex-col items-center justify-center text-center py-12"
+                <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                  <Button
+                    size="lg"
+                    onClick={() => setShowPopup(true)}
+                    className="w-full sm:w-auto h-13 px-9 text-base font-semibold bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-200 transition-all"
+                    data-testid="button-hero-book"
                   >
-                    <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
-                      <CheckCircle2 className="h-10 w-10 text-primary" />
+                    Book a Free Intro Session
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="lg" variant="ghost"
+                    onClick={() => scrollTo("benefits")}
+                    className="w-full sm:w-auto h-13 px-9 text-base font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                    data-testid="button-hero-learn"
+                  >
+                    Explore the Curriculum
+                  </Button>
+                </motion.div>
+
+                {/* Social proof strip */}
+                <motion.div variants={fadeUp} className="mt-16 flex flex-wrap items-center justify-center gap-8 text-sm text-slate-500">
+                  {[
+                    { icon: <Users className="h-4 w-4 text-green-600" />, text: "2,000+ curious learners" },
+                    { icon: <ShieldCheck className="h-4 w-4 text-green-600" />, text: "No tips. No advice. Just clarity." },
+                    { icon: <Clock className="h-4 w-4 text-green-600" />, text: "Free 30-min intro session" },
+                  ].map((item, i) => (
+                    <span key={i} className="flex items-center gap-1.5 font-medium">{item.icon} {item.text}</span>
+                  ))}
+                </motion.div>
+              </motion.div>
+            </div>
+          </section>
+
+          {/* ── 2. Benefits ── */}
+          <section id="benefits" className="py-28 bg-slate-50">
+            <div className="container mx-auto px-4 md:px-6">
+              <FadeSection className="text-center max-w-2xl mx-auto mb-16">
+                <motion.p variants={fadeUp} className="text-green-600 text-sm font-semibold uppercase tracking-widest mb-3">Why Education First</motion.p>
+                <motion.h2 variants={fadeUp} className="text-4xl md:text-5xl font-bold text-slate-900 mb-4 leading-tight">
+                  A strong foundation is the best investment.
+                </motion.h2>
+                <motion.p variants={fadeUp} className="text-slate-500 text-lg leading-relaxed">
+                  Before you risk capital, build the mental framework that separates disciplined investors from reactive gamblers.
+                </motion.p>
+              </FadeSection>
+
+              <FadeSection className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[
+                  {
+                    icon: <LayoutList className="h-5 w-5 text-green-600" />,
+                    title: "Market Basics",
+                    desc: "Understand how markets actually work — indices, sectors, instruments — stripped of hype.",
+                    color: "bg-green-50"
+                  },
+                  {
+                    icon: <ShieldCheck className="h-5 w-5 text-green-600" />,
+                    title: "Risk Awareness",
+                    desc: "Learn to identify and manage risk before it manages you. The most valuable skill.",
+                    color: "bg-emerald-50"
+                  },
+                  {
+                    icon: <Target className="h-5 w-5 text-green-600" />,
+                    title: "Decision Discipline",
+                    desc: "Develop frameworks for calm, rational decisions that aren't driven by fear or FOMO.",
+                    color: "bg-teal-50"
+                  },
+                  {
+                    icon: <AlertTriangle className="h-5 w-5 text-green-600" />,
+                    title: "Avoid Traps",
+                    desc: "Sidestep the expensive emotional traps that catch most beginner investors off-guard.",
+                    color: "bg-green-50"
+                  }
+                ].map((item, i) => (
+                  <motion.div
+                    key={i} variants={fadeUp}
+                    className="group relative bg-white rounded-2xl border border-slate-100 p-7 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
+                  >
+                    <div className={`h-11 w-11 rounded-xl ${item.color} flex items-center justify-center mb-5`}>
+                      {item.icon}
                     </div>
-                    <h3 className="text-2xl font-bold text-slate-900 mb-2">Request Received</h3>
-                    <p className="text-slate-600 mb-8 max-w-xs">
-                      Thank you for your interest. We will contact you at your preferred time.
-                    </p>
-                    <Button variant="outline" onClick={() => setIsSubmitted(false)} data-testid="button-submit-another">Submit another</Button>
+                    <h3 className="font-bold text-slate-900 text-lg mb-2">{item.title}</h3>
+                    <p className="text-slate-500 text-sm leading-relaxed">{item.desc}</p>
                   </motion.div>
-                ) : (
-                  <>
-                    <h3 className="text-2xl font-bold mb-6">Request an Intro Session</h3>
-                    <Form {...form}>
-                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                        <div className="grid md:grid-cols-2 gap-5">
-                          <FormField
-                            control={form.control}
-                            name="fullName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Full Name</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="John Doe" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="mobile"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Mobile Number</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="+91 98765 43210" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                ))}
+              </FadeSection>
+            </div>
+          </section>
+
+          {/* ── 3. Who It's For ── */}
+          <section id="audience" className="py-28 bg-white">
+            <div className="container mx-auto px-4 md:px-6">
+              <div className="grid lg:grid-cols-2 gap-16 items-center">
+                <FadeSection>
+                  <motion.p variants={fadeUp} className="text-green-600 text-sm font-semibold uppercase tracking-widest mb-3">Who This Is For</motion.p>
+                  <motion.h2 variants={fadeUp} className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 leading-tight">
+                    Built for the curious. <br />Not the reckless.
+                  </motion.h2>
+                  <motion.p variants={fadeUp} className="text-lg text-slate-500 mb-10 leading-relaxed">
+                    We don't promise overnight wealth. We deliver something rarer: genuine understanding. If you want hot tips, we're not for you. If you want clarity, you've found the right place.
+                  </motion.p>
+                  <motion.div variants={stagger} className="space-y-5">
+                    {[
+                      {
+                        icon: <Lightbulb className="h-5 w-5 text-green-600" />,
+                        title: "Complete Beginners",
+                        desc: "Starting from zero and want a structured, jargon-free path."
+                      },
+                      {
+                        icon: <UserCheck className="h-5 w-5 text-green-600" />,
+                        title: "Working Professionals",
+                        desc: "Have capital but lack the time to filter market noise intelligently."
+                      },
+                      {
+                        icon: <TrendingUp className="h-5 w-5 text-green-600" />,
+                        title: "Demat Account Holders",
+                        desc: "Opened an account but unsure what to do with it safely and wisely."
+                      },
+                      {
+                        icon: <BookOpen className="h-5 w-5 text-green-600" />,
+                        title: "Curious Investors",
+                        desc: "Interested in markets but want to learn properly before participating."
+                      }
+                    ].map((item, i) => (
+                      <motion.div key={i} variants={fadeUp} className="flex gap-4 p-4 rounded-xl hover:bg-slate-50 transition-colors">
+                        <div className="h-10 w-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
+                          {item.icon}
                         </div>
-
-                        <FormField
-                          control={form.control}
-                          name="city"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>City</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Mumbai, Bangalore, etc." {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <div className="grid md:grid-cols-2 gap-5">
-                          <FormField
-                            control={form.control}
-                            name="experience"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Experience Level</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select level" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="beginner">Complete Beginner</SelectItem>
-                                    <SelectItem value="demat">Have a Demat Account</SelectItem>
-                                    <SelectItem value="tried">Tried Trading</SelectItem>
-                                    <SelectItem value="learning">Learning Actively</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name="contactTime"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Best Time to Contact</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select time" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="morning">Morning (10AM - 12PM)</SelectItem>
-                                    <SelectItem value="afternoon">Afternoon (1PM - 4PM)</SelectItem>
-                                    <SelectItem value="evening">Evening (5PM - 7PM)</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                        <div>
+                          <h4 className="font-semibold text-slate-900">{item.title}</h4>
+                          <p className="text-slate-500 text-sm mt-0.5">{item.desc}</p>
                         </div>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </FadeSection>
 
-                        <FormField
-                          control={form.control}
-                          name="intent"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>What do you want to understand?</FormLabel>
-                              <FormControl>
-                                <Textarea 
-                                  placeholder="I want to learn about long-term investing..." 
-                                  className="resize-none" 
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                {/* Pull-quote card */}
+                <motion.div
+                  initial={{ opacity: 0, x: 32 }} whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 shadow-2xl aspect-[4/5] flex flex-col justify-between p-10">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(74,222,128,0.08),transparent_60%)]" />
+                    <div className="relative z-10">
+                      <img src={stockSenseLogo} alt="StockSense" className="h-10 w-auto mb-8 opacity-90" />
+                    </div>
+                    <div className="relative z-10">
+                      <div className="w-8 h-0.5 bg-green-500 mb-6" />
+                      <blockquote className="text-3xl font-light text-white leading-snug italic mb-6">
+                        "An investment in knowledge pays the best interest."
+                      </blockquote>
+                      <p className="text-slate-400 text-sm">— Benjamin Franklin</p>
+                    </div>
+                    <div className="relative z-10 flex gap-3 mt-6">
+                      <Button
+                        onClick={() => setShowPopup(true)}
+                        className="bg-green-600 hover:bg-green-700 text-white text-sm px-5 h-10"
+                        data-testid="button-quote-cta"
+                      >
+                        Start Learning <ChevronRight className="ml-1 h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+          </section>
 
-                        <FormField
-                          control={form.control}
-                          name="consent"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 bg-slate-50/50">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel className="text-sm font-normal text-slate-600">
-                                  I agree to be contacted by call, SMS, or WhatsApp regarding my enquiry.
-                                </FormLabel>
-                                <FormMessage />
-                              </div>
-                            </FormItem>
-                          )}
-                        />
+          {/* ── 4. How It Works ── */}
+          <section id="how-it-works" className="py-28 bg-slate-50">
+            <div className="container mx-auto px-4 md:px-6">
+              <FadeSection className="text-center max-w-2xl mx-auto mb-16">
+                <motion.p variants={fadeUp} className="text-green-600 text-sm font-semibold uppercase tracking-widest mb-3">The Process</motion.p>
+                <motion.h2 variants={fadeUp} className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Your path to clarity</motion.h2>
+                <motion.p variants={fadeUp} className="text-slate-500 text-lg">Three simple steps to begin your educational journey.</motion.p>
+              </FadeSection>
 
-                        <Button type="submit" className="w-full h-12 text-base font-semibold" data-testid="button-submit-form">
-                          Request Session <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                        <p className="text-xs text-center text-slate-500 mt-4">
-                          We value your privacy and will never share your details.
-                        </p>
-                      </form>
-                    </Form>
-                  </>
-                )}
+              <FadeSection className="grid md:grid-cols-3 gap-8 relative">
+                {/* connector line */}
+                <div className="hidden md:block absolute top-14 left-[22%] right-[22%] h-px bg-gradient-to-r from-green-200 via-green-300 to-green-200" />
+                {[
+                  {
+                    step: "01",
+                    title: "Share Your Interest",
+                    desc: "Fill out the brief form to tell us where you currently stand and what you want to understand.",
+                    cta: true
+                  },
+                  {
+                    step: "02",
+                    title: "We Reach Out",
+                    desc: "Our team contacts you at your preferred time for a relaxed, no-pressure conversation.",
+                    cta: false
+                  },
+                  {
+                    step: "03",
+                    title: "Begin Your Journey",
+                    desc: "Start structured learning sessions tailored to your current knowledge level and goals.",
+                    cta: false
+                  }
+                ].map((item, i) => (
+                  <motion.div key={i} variants={fadeUp} className="relative z-10 flex flex-col items-center text-center">
+                    <div className="h-28 w-28 rounded-full bg-white border-2 border-green-100 shadow-md flex flex-col items-center justify-center mb-7 transition-shadow hover:shadow-lg">
+                      <span className="text-3xl font-extrabold text-green-600 leading-none">{item.step}</span>
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-3">{item.title}</h3>
+                    <p className="text-slate-500 text-sm leading-relaxed max-w-xs">{item.desc}</p>
+                    {item.cta && (
+                      <Button
+                        size="sm"
+                        onClick={() => setShowPopup(true)}
+                        className="mt-5 bg-green-600 hover:bg-green-700 text-white"
+                        data-testid="button-step-book"
+                      >
+                        Get Started
+                      </Button>
+                    )}
+                  </motion.div>
+                ))}
+              </FadeSection>
+            </div>
+          </section>
+
+          {/* ── 5. Inline Lead Form (backup / reinforcement) ── */}
+          <section id="contact" className="py-28 bg-slate-900 relative overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(74,222,128,0.07),transparent_55%)] pointer-events-none" />
+            <div className="container mx-auto px-4 md:px-6 relative z-10">
+              <div className="grid lg:grid-cols-2 gap-16 items-start">
+                {/* Left pitch */}
+                <FadeSection>
+                  <motion.p variants={fadeUp} className="text-green-400 text-sm font-semibold uppercase tracking-widest mb-4">Ready to Start?</motion.p>
+                  <motion.h2 variants={fadeUp} className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
+                    Build your foundation today.
+                  </motion.h2>
+                  <motion.p variants={fadeUp} className="text-slate-400 text-lg mb-10 leading-relaxed max-w-sm">
+                    Book your free introductory session. No obligation. No sales. Just a focused conversation about your learning goals.
+                  </motion.p>
+                  <motion.div variants={stagger} className="space-y-5">
+                    {[
+                      { icon: <UserCheck className="h-5 w-5 text-green-400" />, title: "Personalised Approach", desc: "Tailored to your current knowledge and goals." },
+                      { icon: <ShieldCheck className="h-5 w-5 text-green-400" />, title: "No Pressure. No Sales Pitch.", desc: "An educational discovery call — not a pitch for trading tools." },
+                      { icon: <Clock className="h-5 w-5 text-green-400" />, title: "Your Time, Your Schedule", desc: "Choose the slot that works best for you." }
+                    ].map((item, i) => (
+                      <motion.div key={i} variants={fadeUp} className="flex gap-4">
+                        <div className="h-10 w-10 rounded-lg bg-slate-800 flex items-center justify-center flex-shrink-0">
+                          {item.icon}
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-white text-sm">{item.title}</h4>
+                          <p className="text-slate-400 text-sm">{item.desc}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </FadeSection>
+
+                {/* Right form card */}
+                <motion.div
+                  initial={{ opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  className="bg-white rounded-2xl p-7 md:p-10 shadow-2xl"
+                >
+                  {pageFormSubmitted ? (
+                    <SuccessState />
+                  ) : leadSubmitted ? (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center text-center py-12 gap-4">
+                      <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
+                        <CheckCircle2 className="h-8 w-8 text-green-600" />
+                      </div>
+                      <h3 className="text-xl font-bold text-slate-900">You're already on the list</h3>
+                      <p className="text-slate-500 text-sm max-w-xs">Your request has been received. We'll be in touch soon.</p>
+                    </motion.div>
+                  ) : (
+                    <>
+                      <h3 className="text-2xl font-bold text-slate-900 mb-1">Request an Intro Session</h3>
+                      <p className="text-slate-500 text-sm mb-6">Fill in your details below — takes less than a minute.</p>
+                      <LeadFormFields form={pageForm} onSubmit={handlePageSubmit} submitLabel="Request My Session" />
+                    </>
+                  )}
+                </motion.div>
+              </div>
+            </div>
+          </section>
+
+          {/* ── 6. FAQ ── */}
+          <section id="faq" className="py-28 bg-white">
+            <div className="container mx-auto px-4 md:px-6 max-w-3xl">
+              <FadeSection className="text-center mb-16">
+                <motion.p variants={fadeUp} className="text-green-600 text-sm font-semibold uppercase tracking-widest mb-3">Common Questions</motion.p>
+                <motion.h2 variants={fadeUp} className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Frequently Asked</motion.h2>
+                <motion.p variants={fadeUp} className="text-slate-500 text-lg">Everything you need to know before getting started.</motion.p>
+              </FadeSection>
+
+              <FadeSection>
+                <motion.div variants={fadeUp}>
+                  <Accordion type="single" collapsible className="w-full space-y-3">
+                    {[
+                      {
+                        q: "Is this for complete beginners?",
+                        a: "Absolutely. StockSense is built specifically for people starting from zero. We strip away the jargon and build your confidence step-by-step with practical, grounded learning."
+                      },
+                      {
+                        q: "Do I need a demat account to join?",
+                        a: "No. We actually recommend understanding the basics before opening one. If you already have a demat account but lack clarity on what to do with it, we're the right place to start."
+                      },
+                      {
+                        q: "Is this educational or investment advisory?",
+                        a: "StockSense is strictly an educational platform. We provide market awareness and learning resources. We do not provide stock tips, investment advice, or buy/sell recommendations of any kind."
+                      },
+                      {
+                        q: "How will I be contacted?",
+                        a: "Once you submit your request, our team will reach out via phone call or WhatsApp during your preferred time slot to discuss your learning goals and background."
+                      },
+                      {
+                        q: "What happens after I submit the form?",
+                        a: "You'll have a brief, no-pressure discovery call with a member of our team. We'll understand your current knowledge level and suggest a learning path that fits your pace and goals."
+                      },
+                      {
+                        q: "Is there any fee for the intro session?",
+                        a: "The introductory session is completely free. It's a no-obligation conversation to help us understand your goals and for you to understand what StockSense offers."
+                      }
+                    ].map((item, i) => (
+                      <AccordionItem
+                        key={i} value={`item-${i}`}
+                        className="bg-slate-50 px-6 rounded-xl border border-slate-100 hover:border-green-100 hover:bg-green-50/30 transition-colors"
+                        data-testid={`faq-item-${i}`}
+                      >
+                        <AccordionTrigger className="text-left text-base font-semibold text-slate-900 hover:no-underline py-5 gap-4">
+                          {item.q}
+                        </AccordionTrigger>
+                        <AccordionContent className="text-slate-600 text-sm leading-relaxed pb-5">
+                          {item.a}
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
+                </motion.div>
+              </FadeSection>
+
+              <FadeSection className="mt-12 text-center">
+                <motion.div variants={fadeUp} className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl p-10 text-white">
+                  <h3 className="text-2xl font-bold mb-2">Still have questions?</h3>
+                  <p className="text-green-100 mb-6 text-sm">Book your free intro session and get all your questions answered personally.</p>
+                  <Button
+                    onClick={() => setShowPopup(true)}
+                    className="bg-white text-green-700 hover:bg-green-50 font-semibold h-11 px-8"
+                    data-testid="button-faq-cta"
+                  >
+                    Book a Free Session <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </motion.div>
+              </FadeSection>
+            </div>
+          </section>
+        </main>
+
+        {/* ── Footer & Disclaimer ── */}
+        <footer className="bg-slate-900 pt-16 pb-8 border-t border-slate-800">
+          <div className="container mx-auto px-4 md:px-6">
+            <div className="grid md:grid-cols-3 gap-12 mb-14">
+              <div className="md:col-span-1">
+                <img src={stockSenseLogo} alt="StockSense" className="h-9 w-auto mb-5" />
+                <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
+                  Clarity Before Capital. Structured market education for curious, serious beginners.
+                </p>
+              </div>
+              <div>
+                <h4 className="text-white font-semibold mb-5 text-sm uppercase tracking-widest">Navigate</h4>
+                <ul className="space-y-3 text-slate-400 text-sm">
+                  {[["hero", "Home"], ["benefits", "Why Education"], ["audience", "Who It's For"], ["how-it-works", "How It Works"], ["faq", "FAQ"]].map(([id, label]) => (
+                    <li key={id}>
+                      <button onClick={() => scrollTo(id)} className="hover:text-white transition-colors">
+                        {label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="text-white font-semibold mb-5 text-sm uppercase tracking-widest">Contact</h4>
+                <ul className="space-y-3 text-slate-400 text-sm">
+                  {/* Replace placeholders below with real contact details */}
+                  <li>CONTACT_EMAIL_HERE</li>
+                  <li>WHATSAPP_NUMBER_HERE</li>
+                </ul>
+                <Button
+                  size="sm"
+                  onClick={() => setShowPopup(true)}
+                  className="mt-6 bg-green-600 hover:bg-green-700 text-white"
+                  data-testid="button-footer-book"
+                >
+                  Book a Session
+                </Button>
+              </div>
+            </div>
+
+            <Separator className="bg-slate-800 mb-8" />
+
+            <div className="bg-slate-800/50 rounded-xl p-6 mb-8 text-xs text-slate-400 leading-relaxed border border-slate-800">
+              <strong className="text-slate-300 block mb-2">Important Disclaimer</strong>
+              StockSense is an educational and investor awareness initiative only. We are not registered investment advisors. All content, resources, and discussions are strictly for educational purposes and should not be interpreted as financial, investment, or trading advice. We do not provide stock tips, portfolio management, or buy/sell recommendations. All investments are subject to market risk. Users are entirely responsible for their own financial decisions. Please consult a certified financial advisor before making any investment.
+            </div>
+
+            <div className="flex flex-col md:flex-row items-center justify-between text-sm text-slate-500 gap-4">
+              <p>© {new Date().getFullYear()} StockSense Education. All rights reserved.</p>
+              <div className="flex gap-5">
+                <a href="#" className="hover:text-slate-300 transition-colors">Privacy Policy</a>
+                <a href="#" className="hover:text-slate-300 transition-colors">Terms of Service</a>
               </div>
             </div>
           </div>
-        </section>
-
-        {/* 6. FAQ */}
-        <section id="faq" className="py-24 bg-slate-50">
-          <div className="container mx-auto px-4 md:px-6 max-w-3xl">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">Frequently Asked Questions</h2>
-              <p className="text-slate-600 text-lg">Everything you need to know before getting started.</p>
-            </div>
-
-            <Accordion type="single" collapsible className="w-full space-y-4">
-              <AccordionItem value="item-1" className="bg-white px-6 rounded-lg border border-slate-100 shadow-sm">
-                <AccordionTrigger className="text-left text-lg font-medium hover:no-underline py-6">Is this for beginners?</AccordionTrigger>
-                <AccordionContent className="text-slate-600 text-base pb-6 leading-relaxed">
-                  Absolutely. StockSense is built specifically for individuals who are starting from zero. We strip away the jargon and focus on core concepts to build your confidence step-by-step.
-                </AccordionContent>
-              </AccordionItem>
-              
-              <AccordionItem value="item-2" className="bg-white px-6 rounded-lg border border-slate-100 shadow-sm">
-                <AccordionTrigger className="text-left text-lg font-medium hover:no-underline py-6">Do I need a demat account?</AccordionTrigger>
-                <AccordionContent className="text-slate-600 text-base pb-6 leading-relaxed">
-                  No, you do not need a demat account to start learning. In fact, we recommend understanding the basics before you even open one. If you already have one, that's fine too.
-                </AccordionContent>
-              </AccordionItem>
-              
-              <AccordionItem value="item-3" className="bg-white px-6 rounded-lg border border-slate-100 shadow-sm">
-                <AccordionTrigger className="text-left text-lg font-medium hover:no-underline py-6">Is this educational or advisory?</AccordionTrigger>
-                <AccordionContent className="text-slate-600 text-base pb-6 leading-relaxed">
-                  StockSense is strictly an educational platform. We provide market awareness and learning resources. We do not provide stock tips, investment advice, or buy/sell recommendations.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-4" className="bg-white px-6 rounded-lg border border-slate-100 shadow-sm">
-                <AccordionTrigger className="text-left text-lg font-medium hover:no-underline py-6">How will I be contacted?</AccordionTrigger>
-                <AccordionContent className="text-slate-600 text-base pb-6 leading-relaxed">
-                  Once you submit your request, our team will reach out via a phone call or WhatsApp during your preferred time slot to discuss your learning goals.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-5" className="bg-white px-6 rounded-lg border border-slate-100 shadow-sm">
-                <AccordionTrigger className="text-left text-lg font-medium hover:no-underline py-6">What happens after I submit?</AccordionTrigger>
-                <AccordionContent className="text-slate-600 text-base pb-6 leading-relaxed">
-                  You'll have a brief, no-pressure discovery call with our team. We'll assess your current understanding and suggest a learning path that fits your pace and goals.
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </div>
-        </section>
-
-      </main>
-
-      {/* 8. Footer & Disclaimer */}
-      <footer className="bg-slate-900 pt-16 pb-8 border-t border-slate-800 text-slate-400">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="grid md:grid-cols-4 gap-12 mb-16">
-            <div className="md:col-span-2">
-              <img src={stockSenseLogo} alt="StockSense" className="h-10 w-auto mb-6" />
-              <p className="max-w-xs text-slate-400 mb-6">
-                Clarity Before Capital. Educational resources and structured learning for the modern, curious investor.
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="text-white font-semibold mb-6">Navigation</h4>
-              <ul className="space-y-4">
-                <li><button onClick={() => scrollTo('hero')} className="hover:text-white transition-colors">Home</button></li>
-                <li><button onClick={() => scrollTo('benefits')} className="hover:text-white transition-colors">Benefits</button></li>
-                <li><button onClick={() => scrollTo('how-it-works')} className="hover:text-white transition-colors">Process</button></li>
-                <li><button onClick={() => scrollTo('faq')} className="hover:text-white transition-colors">FAQ</button></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="text-white font-semibold mb-6">Contact</h4>
-              <ul className="space-y-4 text-sm">
-                <li>hello@stocksense.edu</li>
-                <li>+91 98765 43210</li>
-                <li className="pt-2">123 Financial District,<br/>Mumbai, India 400001</li>
-              </ul>
-            </div>
-          </div>
-          
-          <Separator className="bg-slate-800 mb-8" />
-          
-          {/* 7. Disclaimer */}
-          <div className="bg-slate-800/50 rounded-lg p-6 mb-8 text-xs text-slate-400 leading-relaxed border border-slate-800">
-            <strong className="text-slate-300 block mb-2">Important Disclaimer</strong>
-            StockSense is an educational and investor awareness platform only. We are not registered investment advisors. The information, resources, and discussions provided are for educational purposes and should not be construed as financial, investment, or trading advice. We do not provide stock recommendations, tips, or portfolio management services. All investments in the stock market are subject to market risks. Users are entirely responsible for their own financial decisions and should consult with a certified financial advisor before making any investment. Past performance is not indicative of future results.
-          </div>
-          
-          <div className="flex flex-col md:flex-row items-center justify-between text-sm">
-            <p>© {new Date().getFullYear()} StockSense Education. All rights reserved.</p>
-            <div className="flex gap-4 mt-4 md:mt-0">
-              <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-            </div>
-          </div>
-        </div>
-      </footer>
-    </div>
+        </footer>
+      </div>
+    </>
   );
 }
