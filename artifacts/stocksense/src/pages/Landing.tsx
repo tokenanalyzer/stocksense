@@ -5,7 +5,7 @@ import * as z from "zod";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
   CheckCircle2, BookOpen, ShieldCheck, Target, AlertTriangle,
-  ArrowRight, UserCheck, LayoutList, TrendingUp, X, Star,
+  ArrowRight, UserCheck, LayoutList, TrendingUp, Star,
   ChevronRight, Lightbulb, Users, Clock
 } from "lucide-react";
 import stockSenseLogo from "@assets/file_000000001d8871fa822307813ae000a5_1780324458986.png";
@@ -208,15 +208,22 @@ function SuccessState({ onReset }: { onReset?: () => void }) {
   );
 }
 
-/* ─── Lead Popup Component ─────────────────────────────────────────────────── */
+/* ─── Lead Gate (mandatory — no close/bypass) ──────────────────────────────── */
 const SESSION_KEY = "stocksense_lead_submitted";
 
-function LeadPopup({ onDismiss }: { onDismiss: () => void }) {
+function LeadGate({ onUnlock }: { onUnlock: () => void }) {
   const [submitted, setSubmitted] = useState(false);
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: { fullName: "", mobile: "", city: "", experience: "", intent: "", contactTime: "", consent: false }
   });
+
+  /* Lock body scroll while gate is visible */
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
 
   function handleSubmit(values: FormValues) {
     // TODO: replace with real form endpoint — POST values to FORM_ENDPOINT_HERE
@@ -225,62 +232,53 @@ function LeadPopup({ onDismiss }: { onDismiss: () => void }) {
     setSubmitted(true);
   }
 
-  function handleSuccessClose() {
-    onDismiss();
-  }
-
   return (
+    /* Overlay — pointer-events blocked so user can't interact with page behind */
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", backgroundColor: "rgba(15,23,42,0.55)" }}
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-6 px-4"
+      style={{
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+        backgroundColor: "rgba(10,15,30,0.72)"
+      }}
+      /* eat all clicks on the backdrop so nothing passes through */
+      onClick={e => e.stopPropagation()}
       role="dialog"
       aria-modal="true"
       aria-label="Request an intro session"
     >
       <motion.div
-        initial={{ opacity: 0, scale: 0.94, y: 20 }}
+        initial={{ opacity: 0, scale: 0.93, y: 28 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.94, y: 20 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
-        style={{ boxShadow: "0 32px 80px -12px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.04)" }}
+        exit={{ opacity: 0, scale: 0.93, y: 28 }}
+        transition={{ duration: 0.45, ease: EASE }}
+        className="relative w-full max-w-2xl bg-white rounded-2xl overflow-hidden flex flex-col my-auto"
+        style={{ boxShadow: "0 40px 100px -16px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.06)" }}
         onClick={e => e.stopPropagation()}
       >
         {/* Top accent bar */}
-        <div className="h-1 w-full bg-gradient-to-r from-green-400 via-green-600 to-emerald-500 flex-shrink-0" />
+        <div className="h-1.5 w-full bg-gradient-to-r from-green-400 via-green-600 to-emerald-500 flex-shrink-0" />
 
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 flex-shrink-0">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-green-50 border border-green-100 px-3 py-1 text-xs font-semibold text-green-700 mb-3">
-                <BookOpen className="h-3 w-3" />
-                Free Intro Session
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-slate-900 leading-tight">
-                Request an Intro Session
-              </h2>
-              <p className="text-slate-500 text-sm mt-1.5 leading-relaxed">
-                Take 60 seconds. We'll reach out at your preferred time — no pressure, no sales pitch.
-              </p>
-            </div>
-            <button
-              onClick={onDismiss}
-              className="flex-shrink-0 mt-1 h-8 w-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
-              aria-label="Close"
-              data-testid="button-close-popup"
-            >
-              <X className="h-4 w-4 text-slate-500" />
-            </button>
+        <div className="px-7 pt-7 pb-5 flex-shrink-0 border-b border-slate-100">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-green-50 border border-green-200 px-3 py-1 text-xs font-semibold text-green-700 mb-4">
+            <BookOpen className="h-3 w-3" />
+            Free Intro Session — No Obligation
           </div>
+          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 leading-tight">
+            Request an Intro Session
+          </h2>
+          <p className="text-slate-500 text-sm mt-2 leading-relaxed max-w-lg">
+            Share a few details and we'll reach out at your preferred time. Takes under a minute — then explore everything on the page.
+          </p>
         </div>
 
-        {/* Scrollable form body */}
-        <div className="px-6 pb-6 overflow-y-auto flex-1">
+        {/* Form body */}
+        <div className="px-7 py-6">
           {submitted ? (
-            <SuccessState onReset={handleSuccessClose} />
+            <SuccessState onReset={onUnlock} />
           ) : (
-            <LeadFormFields form={form} onSubmit={handleSubmit} submitLabel="Request My Free Session" />
+            <LeadFormFields form={form} onSubmit={handleSubmit} submitLabel="Submit & Access the Page" />
           )}
         </div>
       </motion.div>
@@ -315,12 +313,7 @@ export default function Landing() {
     return () => clearTimeout(t);
   }, []);
 
-  function handlePopupDismiss() {
-    setShowPopup(false);
-    // Mark as submitted so inline form shows success, or just close
-  }
-
-  function handlePopupSubmitSuccess() {
+  function handleGateUnlock() {
     setShowPopup(false);
     setLeadSubmitted(true);
   }
@@ -345,13 +338,9 @@ export default function Landing() {
 
   return (
     <>
-      {/* ── Popup overlay ── */}
+      {/* ── Mandatory lead gate — no close, no bypass ── */}
       <AnimatePresence>
-        {showPopup && (
-          <LeadPopup
-            onDismiss={handlePopupDismiss}
-          />
-        )}
+        {showPopup && <LeadGate onUnlock={handleGateUnlock} />}
       </AnimatePresence>
 
       <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
