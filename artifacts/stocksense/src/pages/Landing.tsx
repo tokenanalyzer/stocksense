@@ -6,7 +6,7 @@ import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
   CheckCircle2, BookOpen, ShieldCheck, Target, AlertTriangle,
   ArrowRight, UserCheck, LayoutList, TrendingUp, Star,
-  ChevronRight, Lightbulb, Users, Clock, Loader2, AlertCircle
+  ChevronRight, Lightbulb, Users, Clock, Loader2, AlertCircle, X
 } from "lucide-react";
 import stockSenseLogo from "@assets/file_000000001d8871fa822307813ae000a5_1780324458986.png";
 
@@ -337,6 +337,106 @@ function LeadGate({ onUnlock }: { onUnlock: () => void }) {
   );
 }
 
+/* ─── Booking Modal (closeable — shown when lead already captured) ─────────── */
+function BookingModal({ onClose }: { onClose: () => void }) {
+  const [submitted,   setSubmitted]   = useState(false);
+  const [isSubmitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | undefined>();
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { fullName: "", mobile: "", city: "", experience: "", intent: "", contactTime: "", consent: false }
+  });
+
+  /* ESC key closes */
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  /* Lock body scroll */
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  async function handleSubmit(values: FormValues) {
+    setSubmitting(true);
+    setSubmitError(undefined);
+    try {
+      await submitLead({ ...values, timestamp: new Date().toISOString() });
+      setSubmitted(true);
+    } catch {
+      setSubmitError("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-6 px-4"
+      style={{ backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", backgroundColor: "rgba(10,15,30,0.72)" }}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.93, y: 28 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.93, y: 28 }}
+        transition={{ duration: 0.4, ease: EASE }}
+        className="relative w-full max-w-2xl bg-white rounded-2xl overflow-hidden flex flex-col my-auto"
+        style={{ boxShadow: "0 40px 100px -16px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.06)" }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Top accent */}
+        <div className="h-1.5 w-full bg-gradient-to-r from-green-400 via-green-600 to-emerald-500 flex-shrink-0" />
+
+        {/* ✕ Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-10 h-9 w-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+          aria-label="Close"
+        >
+          <X className="h-5 w-5 text-slate-500" />
+        </button>
+
+        {/* Header */}
+        <div className="px-7 pt-7 pb-5 flex-shrink-0 border-b border-slate-100">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-green-50 border border-green-200 px-3 py-1 text-xs font-semibold text-green-700 mb-4">
+            <BookOpen className="h-3 w-3" />
+            Book Another Session — No Obligation
+          </div>
+          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 leading-tight">
+            Request Another Session
+          </h2>
+          <p className="text-slate-500 text-sm mt-2 leading-relaxed max-w-lg">
+            Want to book for someone else or request a follow-up session? Fill in the details below.
+          </p>
+        </div>
+
+        {/* Body */}
+        <div className="px-7 py-6">
+          {submitted ? (
+            <SuccessState onReset={onClose} />
+          ) : (
+            <LeadFormFields
+              form={form}
+              onSubmit={handleSubmit}
+              submitLabel="Submit Request"
+              isSubmitting={isSubmitting}
+              submitError={submitError}
+            />
+          )}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 /* ─── Animated section wrapper ─────────────────────────────────────────────── */
 function FadeSection({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -364,9 +464,20 @@ export default function Landing() {
     return () => clearTimeout(t);
   }, []);
 
+  const [showBookingModal, setShowBookingModal] = useState(false);
+
   function handleGateUnlock() {
     setShowPopup(false);
     setLeadSubmitted(true);
+  }
+
+  /* Smart book handler: closeable modal if already submitted, mandatory gate if not */
+  function handleBookClick() {
+    if (leadSubmitted) {
+      setShowBookingModal(true);
+    } else {
+      setShowPopup(true);
+    }
   }
 
   const scrollTo = (id: string) => {
@@ -404,13 +515,18 @@ export default function Landing() {
         {showPopup && <LeadGate onUnlock={handleGateUnlock} />}
       </AnimatePresence>
 
+      {/* ── Closeable booking modal — shown when lead already captured ── */}
+      <AnimatePresence>
+        {showBookingModal && <BookingModal onClose={() => setShowBookingModal(false)} />}
+      </AnimatePresence>
+
       <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
 
         {/* ── Navigation ── */}
         <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-slate-900 backdrop-blur">
           <div className="container mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
             <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} className="flex items-center gap-2">
-              <img src={stockSenseLogo} alt="StockSense" className="h-9 w-auto" />
+              <img src={stockSenseLogo} alt="StockSense" className="h-12 w-auto" />
             </button>
             <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-slate-400">
               {[["benefits", "Why Learn First"], ["audience", "Who It's For"], ["how-it-works", "How It Works"], ["faq", "FAQ"]].map(([id, label]) => (
@@ -420,7 +536,7 @@ export default function Landing() {
               ))}
             </nav>
             <Button
-              onClick={() => setShowPopup(true)}
+              onClick={handleBookClick}
               className="bg-green-600 hover:bg-green-700 text-white h-9 px-5 text-sm font-semibold shadow-none"
               data-testid="button-nav-book"
             >
@@ -464,7 +580,7 @@ export default function Landing() {
                 <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center justify-center gap-4">
                   <Button
                     size="lg"
-                    onClick={() => setShowPopup(true)}
+                    onClick={handleBookClick}
                     className="w-full sm:w-auto h-13 px-9 text-base font-semibold bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-200 transition-all"
                     data-testid="button-hero-book"
                   >
@@ -617,7 +733,7 @@ export default function Landing() {
                     </div>
                     <div className="relative z-10 flex gap-3 mt-6">
                       <Button
-                        onClick={() => setShowPopup(true)}
+                        onClick={handleBookClick}
                         className="bg-green-600 hover:bg-green-700 text-white text-sm px-5 h-10"
                         data-testid="button-quote-cta"
                       >
@@ -671,7 +787,7 @@ export default function Landing() {
                     {item.cta && (
                       <Button
                         size="sm"
-                        onClick={() => setShowPopup(true)}
+                        onClick={handleBookClick}
                         className="mt-5 bg-green-600 hover:bg-green-700 text-white"
                         data-testid="button-step-book"
                       >
@@ -805,7 +921,7 @@ export default function Landing() {
                   <h3 className="text-2xl font-bold mb-2">Still have questions?</h3>
                   <p className="text-green-100 mb-6 text-sm">Book your free intro session and get all your questions answered personally.</p>
                   <Button
-                    onClick={() => setShowPopup(true)}
+                    onClick={handleBookClick}
                     className="bg-white text-green-700 hover:bg-green-50 font-semibold h-11 px-8"
                     data-testid="button-faq-cta"
                   >
@@ -822,7 +938,7 @@ export default function Landing() {
           <div className="container mx-auto px-4 md:px-6">
             <div className="grid md:grid-cols-3 gap-12 mb-14">
               <div className="md:col-span-1">
-                <img src={stockSenseLogo} alt="StockSense" className="h-9 w-auto mb-5" />
+                <img src={stockSenseLogo} alt="StockSense" className="h-12 w-auto mb-5" />
                 <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
                   Clarity Before Capital. Structured market education for curious, serious beginners.
                 </p>
@@ -848,7 +964,7 @@ export default function Landing() {
                 </ul>
                 <Button
                   size="sm"
-                  onClick={() => setShowPopup(true)}
+                  onClick={handleBookClick}
                   className="mt-6 bg-green-600 hover:bg-green-700 text-white"
                   data-testid="button-footer-book"
                 >
