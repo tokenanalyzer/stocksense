@@ -959,7 +959,11 @@ export default function Landing() {
                 <h4 className="text-white font-semibold mb-5 text-sm uppercase tracking-widest">Contact</h4>
                 <ul className="space-y-3 text-slate-400 text-sm">
                   {/* Replace placeholders below with real contact details */}
-                  <li>CONTACT_EMAIL_HERE</li>
+                  <li>
+                    <a href="mailto:stocksense00@gmail.com" className="hover:text-green-400 transition-colors">
+                      stocksense00@gmail.com
+                    </a>
+                  </li>
                   <li>WHATSAPP_NUMBER_HERE</li>
                 </ul>
                 <Button
