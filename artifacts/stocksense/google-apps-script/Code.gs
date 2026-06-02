@@ -5,14 +5,19 @@
  *
  * 1. Open your Google Sheet → Extensions → Apps Script
  * 2. Paste this entire file, replacing any existing code
- * 3. Fill in the CONFIG section below (email + admin password)
+ * 3. The CONFIG section below is already filled in — verify it matches
  * 4. Click Save → Deploy → New deployment
  *      Type: Web app | Execute as: Me | Who has access: Anyone
  * 5. Copy the Web App URL
- * 6. In Replit Secrets, set:
+ * 6. In Vercel (or Replit Secrets), set:
  *      VITE_APPS_SCRIPT_URL = <Web App URL>
  *      VITE_ADMIN_PASSWORD  = <same as ADMIN_PASSWORD below>
- * 7. Re-run the Replit workflow
+ * 7. Rebuild and redeploy
+ *
+ * TO UPDATE AN EXISTING DEPLOYMENT:
+ * 1. Paste new code → Save
+ * 2. Deploy → Manage Deployments → Edit (pencil icon) → New version → Deploy
+ *    (do NOT create a new deployment — the URL must stay the same)
  *
  * COLUMN LAYOUT (sheet auto-created):
  *   A: Timestamp  B: Full Name  C: Mobile  D: City
@@ -20,8 +25,8 @@
  */
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
-var NOTIFY_EMAIL   = "stocksense00@gmail.com"; // ← your Gmail
-var ADMIN_PASSWORD = "CHANGE_ME_NOW";         // ← must match VITE_ADMIN_PASSWORD
+var NOTIFY_EMAIL   = "stocksense00@gmail.com";
+var ADMIN_PASSWORD = "Adilhusain@9967";
 var SHEET_NAME     = "StockSense Leads";
 var BRAND_NAME     = "StockSense";
 // ─────────────────────────────────────────────────────────────────────────────
@@ -51,8 +56,8 @@ function doGet(e) {
     return jsonOut({ success: true, leads: readLeads() });
   }
 
-  // Health check
-  return jsonOut({ status: "StockSense endpoint active", ts: new Date().toISOString() });
+  // Health check — includes version marker so frontend can detect correct deployment
+  return jsonOut({ success: true, status: "StockSense endpoint active", version: "2", ts: new Date().toISOString() });
 }
 
 // ── POST — lead submission or admin status update ─────────────────────────────

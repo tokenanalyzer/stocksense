@@ -61,11 +61,29 @@ const EMPTY_FORM: NewLeadForm = {
 async function fetchLeads(token: string): Promise<Lead[]> {
   if (!APPS_SCRIPT_URL) return MOCK_LEADS;
   const url = `${APPS_SCRIPT_URL}?action=getLeads&token=${encodeURIComponent(token)}`;
-  const res  = await fetch(url);
-  if (!res.ok) throw new Error(`Network error ${res.status}`);
-  const json = await res.json() as { success: boolean; leads?: Lead[]; error?: string };
-  if (!json.success) throw new Error(json.error ?? "Failed to fetch leads");
-  return json.leads ?? [];
+  let res: Response;
+  try {
+    res = await fetch(url);
+  } catch {
+    throw new Error("NETWORK_ERROR");
+  }
+  if (!res.ok) throw new Error(`Server error ${res.status}`);
+  let json: Record<string, unknown>;
+  try {
+    json = await res.json() as Record<string, unknown>;
+  } catch {
+    throw new Error("SCRIPT_OUTDATED");
+  }
+  // Detect outdated script: returns health-check shape instead of {success, leads}
+  if ("status" in json && !("success" in json)) {
+    throw new Error("SCRIPT_OUTDATED");
+  }
+  if (!json.success) {
+    const msg = json.error as string | undefined;
+    if (msg === "Unauthorized") throw new Error("UNAUTHORIZED");
+    throw new Error(msg ?? "SCRIPT_OUTDATED");
+  }
+  return (json.leads as Lead[]) ?? [];
 }
 
 async function updateLeadStatus(token: string, rowIndex: number, status: LeadStatus): Promise<void> {
@@ -715,7 +733,51 @@ export default function Admin() {
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-6 space-y-6">
 
         {/* ── Banners ── */}
-        {error && (
+        {error === "SCRIPT_OUTDATED" && (
+          <div className="rounded-xl bg-amber-900/30 border border-amber-700/50 px-5 py-4 text-sm text-amber-200 space-y-3">
+            <div className="flex items-center gap-2 font-bold text-amber-300">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              Apps Script needs to be updated — follow these steps to fix:
+            </div>
+            <ol className="list-decimal list-inside space-y-1.5 text-amber-100/80 text-xs leading-relaxed pl-1">
+              <li>Open your Google Sheet → <strong>Extensions → Apps Script</strong></li>
+              <li>Select all existing code and <strong>replace it</strong> with the contents of <code className="bg-amber-900/40 px-1 rounded">google-apps-script/Code.gs</code> from this project</li>
+              <li>In the script, set <code className="bg-amber-900/40 px-1 rounded">ADMIN_PASSWORD = "Adilhusain@9967"</code></li>
+              <li>Click <strong>Save</strong> (floppy disk icon)</li>
+              <li>Click <strong>Deploy → Manage Deployments → Edit (pencil)</strong></li>
+              <li>Change Version to <strong>"New version"</strong> → click <strong>Deploy</strong></li>
+              <li>Copy the new Web App URL → update <code className="bg-amber-900/40 px-1 rounded">VITE_APPS_SCRIPT_URL</code> if it changed</li>
+              <li>Refresh this page and click <strong>Refresh</strong></li>
+            </ol>
+            <button onClick={loadLeads} className="mt-1 inline-flex items-center gap-1.5 text-xs bg-amber-700/50 hover:bg-amber-700/80 text-amber-100 px-3 py-1.5 rounded-lg transition-colors">
+              <RefreshCw className="h-3 w-3" /> Retry now
+            </button>
+          </div>
+        )}
+        {error === "UNAUTHORIZED" && (
+          <div className="rounded-xl bg-red-900/30 border border-red-800/50 px-5 py-4 text-sm text-red-300 space-y-2">
+            <div className="flex items-center gap-2 font-bold text-red-400">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              Password mismatch — Admin password in Apps Script doesn't match
+            </div>
+            <p className="text-xs text-red-200/70">In your Google Apps Script, set <code className="bg-red-900/40 px-1 rounded">ADMIN_PASSWORD = "Adilhusain@9967"</code>, save, then deploy a new version.</p>
+            <button onClick={loadLeads} className="inline-flex items-center gap-1.5 text-xs bg-red-800/50 hover:bg-red-800/80 text-red-100 px-3 py-1.5 rounded-lg transition-colors">
+              <RefreshCw className="h-3 w-3" /> Retry
+            </button>
+          </div>
+        )}
+        {error === "NETWORK_ERROR" && (
+          <div className="flex items-start gap-3 rounded-xl bg-red-900/30 border border-red-800/50 px-5 py-4 text-sm text-red-300">
+            <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <div>
+              <strong>Network error</strong> — Could not reach the Apps Script endpoint. Check your internet connection and try again.
+              <button onClick={loadLeads} className="ml-3 inline-flex items-center gap-1 text-xs underline hover:no-underline">
+                <RefreshCw className="h-3 w-3" /> Retry
+              </button>
+            </div>
+          </div>
+        )}
+        {error && error !== "SCRIPT_OUTDATED" && error !== "UNAUTHORIZED" && error !== "NETWORK_ERROR" && (
           <div className="flex items-start gap-3 rounded-xl bg-red-900/30 border border-red-800/50 px-5 py-4 text-sm text-red-300">
             <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
             <div><strong>Could not load leads:</strong> {error}</div>
