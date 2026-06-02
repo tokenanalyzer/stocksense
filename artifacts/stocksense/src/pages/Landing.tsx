@@ -35,16 +35,21 @@ async function submitLead(values: Record<string, unknown>): Promise<void> {
     console.log("Lead payload:", values);
     return;
   }
-  const res = await fetch(APPS_SCRIPT_URL, {
+  // Google Apps Script Web Apps redirect POST requests internally, which causes the
+  // browser to turn the POST into a GET (RFC 7231 §6.4.3) and the response body
+  // becomes HTML — not JSON — so attempting res.json() throws and shows an error.
+  //
+  // Fix: submit with mode:"no-cors". The full POST body still reaches doPost() on
+  // the Apps Script side (lead saved, email sent). The response is opaque so we
+  // cannot read it, but any completed fetch means the request got through.
+  // A genuine network failure (no internet, wrong URL) will still throw and surface
+  // the error message to the user.
+  await fetch(APPS_SCRIPT_URL, {
     method: "POST",
-    // Apps Script Web Apps don't support application/json from cross-origin without CORS preflight issues;
-    // sending as text/plain avoids the preflight while still letting us JSON.parse on the server side.
     headers: { "Content-Type": "text/plain" },
-    body: JSON.stringify(values)
+    body: JSON.stringify(values),
+    mode: "no-cors",
   });
-  if (!res.ok) throw new Error(`Network error: ${res.status}`);
-  const json = await res.json() as { success: boolean; error?: string };
-  if (!json.success) throw new Error(json.error ?? "Submission failed");
 }
 
 /* ─── Form schema (shared by popup + inline form) ─────────────────────────── */
