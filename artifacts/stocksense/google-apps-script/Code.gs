@@ -1,30 +1,23 @@
 /**
  * StockSense Lead Capture + Admin API — Google Apps Script
  * ─────────────────────────────────────────────────────────
- * SETUP (one time):
+ * ROOT CAUSE FIX (v3):
+ *   getActiveSpreadsheet() returns null for standalone Web App scripts.
+ *   All sheet access now uses openById(SPREADSHEET_ID) instead.
  *
- * 1. Open your Google Sheet → Extensions → Apps Script
- * 2. Paste this entire file, replacing any existing code
- * 3. The CONFIG section below is already filled in — verify it matches
- * 4. Click Save → Deploy → New deployment
- *      Type: Web app | Execute as: Me | Who has access: Anyone
- * 5. Copy the Web App URL
- * 6. In Vercel (or Replit Secrets), set:
- *      VITE_APPS_SCRIPT_URL = <Web App URL>
- *      VITE_ADMIN_PASSWORD  = <same as ADMIN_PASSWORD below>
- * 7. Rebuild and redeploy
+ * HOW TO UPDATE YOUR EXISTING DEPLOYMENT:
+ * 1. Paste this entire file into Apps Script (replace all existing code)
+ * 2. Click Save (Ctrl+S)
+ * 3. Deploy → Manage Deployments → Edit (pencil) → Version: New version → Deploy
+ *    Do NOT create a new deployment — the URL must stay the same.
  *
- * TO UPDATE AN EXISTING DEPLOYMENT:
- * 1. Paste new code → Save
- * 2. Deploy → Manage Deployments → Edit (pencil icon) → New version → Deploy
- *    (do NOT create a new deployment — the URL must stay the same)
- *
- * COLUMN LAYOUT (sheet auto-created):
+ * COLUMN LAYOUT (A–I):
  *   A: Timestamp  B: Full Name  C: Mobile  D: City
  *   E: Experience  F: Best Time  G: Intent  H: Consent  I: Status
  */
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
+var SPREADSHEET_ID = "1dm8bORIe7CXmaI4bLgmOicW2m78dvNRjr66H5uO4-jk";
 var NOTIFY_EMAIL   = "stocksense00@gmail.com";
 var ADMIN_PASSWORD = "Adilhusain@9967";
 var SHEET_NAME     = "StockSense Leads";
@@ -32,19 +25,42 @@ var BRAND_NAME     = "StockSense";
 // ─────────────────────────────────────────────────────────────────────────────
 
 var COL = {
-  TIMESTAMP:   1,
-  FULL_NAME:   2,
-  MOBILE:      3,
-  CITY:        4,
-  EXPERIENCE:  5,
-  CONTACT_TIME:6,
-  INTENT:      7,
-  CONSENT:     8,
-  STATUS:      9
+  TIMESTAMP:    1,
+  FULL_NAME:    2,
+  MOBILE:       3,
+  CITY:         4,
+  EXPERIENCE:   5,
+  CONTACT_TIME: 6,
+  INTENT:       7,
+  CONSENT:      8,
+  STATUS:       9
 };
 var TOTAL_COLS = 9;
 
-// ── GET — admin reads (getLeads) + health check ───────────────────────────────
+function getSheet() {
+  var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME);
+    var headers = [
+      "Timestamp", "Full Name", "Mobile Number", "City",
+      "Experience Level", "Best Time to Contact",
+      "What They Want to Understand", "Consent Given", "Status"
+    ];
+    sheet.appendRow(headers);
+    sheet.getRange(1, 1, 1, TOTAL_COLS).setFontWeight("bold");
+    sheet.setFrozenRows(1);
+  } else {
+    // Ensure Status column header exists on older sheets
+    if (sheet.getLastColumn() < TOTAL_COLS) {
+      sheet.getRange(1, TOTAL_COLS).setValue("Status");
+      sheet.getRange(1, TOTAL_COLS).setFontWeight("bold");
+    }
+  }
+  return sheet;
+}
+
+// ── GET — health check + admin getLeads ──────────────────────────────────────
 function doGet(e) {
   var action = e && e.parameter && e.parameter.action;
   var token  = e && e.parameter && e.parameter.token;
@@ -56,28 +72,29 @@ function doGet(e) {
     return jsonOut({ success: true, leads: readLeads() });
   }
 
-  // Health check — includes version marker so frontend can detect correct deployment
-  return jsonOut({ success: true, status: "StockSense endpoint active", version: "2", ts: new Date().toISOString() });
+  // Health check — version "3" = openById fix applied
+  return jsonOut({
+    success: true,
+    status:  "StockSense endpoint active",
+    version: "3",
+    ts:      new Date().toISOString()
+  });
 }
 
-// ── POST — lead submission or admin status update ─────────────────────────────
+// ── POST — lead submission + admin status update ──────────────────────────────
 function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
 
-    // Admin: update status
     if (data.action === "updateStatus") {
       if (data.token !== ADMIN_PASSWORD) {
         return jsonOut({ success: false, error: "Unauthorized" });
       }
-      var ss    = SpreadsheetApp.getActiveSpreadsheet();
-      var sheet = ss.getSheetByName(SHEET_NAME);
-      if (!sheet) return jsonOut({ success: false, error: "Sheet not found" });
+      var sheet = getSheet();
       sheet.getRange(data.rowIndex, COL.STATUS).setValue(data.status);
       return jsonOut({ success: true });
     }
 
-    // Regular lead submission
     return handleLeadSubmission(data);
 
   } catch (err) {
@@ -86,27 +103,9 @@ function doPost(e) {
   }
 }
 
-// ── Lead submission logic ─────────────────────────────────────────────────────
+// ── Lead submission ───────────────────────────────────────────────────────────
 function handleLeadSubmission(data) {
-  var ss    = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(SHEET_NAME);
-
-  if (!sheet) {
-    sheet = ss.insertSheet(SHEET_NAME);
-    var headers = ["Timestamp","Full Name","Mobile Number","City",
-                   "Experience Level","Best Time to Contact",
-                   "What They Want to Understand","Consent Given","Status"];
-    sheet.appendRow(headers);
-    sheet.getRange(1, 1, 1, TOTAL_COLS).setFontWeight("bold");
-    sheet.setFrozenRows(1);
-  } else {
-    // Ensure Status column header exists (for sheets created before this version)
-    var lastCol = sheet.getLastColumn();
-    if (lastCol < TOTAL_COLS) {
-      sheet.getRange(1, TOTAL_COLS).setValue("Status");
-      sheet.getRange(1, TOTAL_COLS).setFontWeight("bold");
-    }
-  }
+  var sheet = getSheet();
 
   var timestamp = Utilities.formatDate(
     new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss"
@@ -121,18 +120,17 @@ function handleLeadSubmission(data) {
     data.contactTime || "",
     data.intent      || "",
     data.consent ? "Yes" : "No",
-    "New"                          // default status
+    "New"
   ]);
 
-  // Email notification
+  // Email notification (non-fatal if it fails)
   try {
-    var subject  = BRAND_NAME + " — New Lead: " + (data.fullName || "Unknown");
-    var htmlBody = buildEmailHtml(data, timestamp);
-    var plainBody = buildEmailPlain(data, timestamp);
-    GmailApp.sendEmail(NOTIFY_EMAIL, subject, plainBody, {
-      htmlBody: htmlBody,
-      name: BRAND_NAME + " Leads"
-    });
+    GmailApp.sendEmail(
+      NOTIFY_EMAIL,
+      BRAND_NAME + " — New Lead: " + (data.fullName || "Unknown"),
+      buildEmailPlain(data, timestamp),
+      { htmlBody: buildEmailHtml(data, timestamp), name: BRAND_NAME + " Leads" }
+    );
   } catch (mailErr) {
     Logger.log("Email error (lead still saved): " + mailErr.toString());
   }
@@ -140,33 +138,30 @@ function handleLeadSubmission(data) {
   return jsonOut({ success: true });
 }
 
-// ── Read all leads from sheet ─────────────────────────────────────────────────
+// ── Read leads ────────────────────────────────────────────────────────────────
 function readLeads() {
-  var ss    = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(SHEET_NAME);
-  if (!sheet || sheet.getLastRow() < 2) return [];
+  var sheet = getSheet();
+  if (sheet.getLastRow() < 2) return [];
 
   var data  = sheet.getRange(2, 1, sheet.getLastRow() - 1, TOTAL_COLS).getValues();
   var leads = [];
 
   for (var i = 0; i < data.length; i++) {
     var r = data[i];
-    // Skip empty rows
     if (!r[0] && !r[1]) continue;
     leads.push({
-      rowIndex:    i + 2,            // 1-based sheet row (row 1 = header)
-      timestamp:   r[COL.TIMESTAMP   - 1] ? r[COL.TIMESTAMP   - 1].toString() : "",
-      fullName:    r[COL.FULL_NAME   - 1] || "",
-      mobile:      r[COL.MOBILE      - 1] || "",
-      city:        r[COL.CITY        - 1] || "",
-      experience:  r[COL.EXPERIENCE  - 1] || "",
-      contactTime: r[COL.CONTACT_TIME- 1] || "",
-      intent:      r[COL.INTENT      - 1] || "",
-      consent:     r[COL.CONSENT     - 1] || "",
-      status:      r[COL.STATUS      - 1] || "New"
+      rowIndex:    i + 2,
+      timestamp:   r[COL.TIMESTAMP    - 1] ? r[COL.TIMESTAMP    - 1].toString() : "",
+      fullName:    r[COL.FULL_NAME    - 1] || "",
+      mobile:      r[COL.MOBILE       - 1] || "",
+      city:        r[COL.CITY         - 1] || "",
+      experience:  r[COL.EXPERIENCE   - 1] || "",
+      contactTime: r[COL.CONTACT_TIME - 1] || "",
+      intent:      r[COL.INTENT       - 1] || "",
+      consent:     r[COL.CONSENT      - 1] || "",
+      status:      r[COL.STATUS       - 1] || "New"
     });
   }
-
   return leads;
 }
 
@@ -178,19 +173,18 @@ function buildEmailHtml(data, timestamp) {
     + "</div>"
     + "<div style='background:#f8fafc;padding:24px 28px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;'>"
     + "<table style='width:100%;border-collapse:collapse;font-size:15px;'>"
-    + emailRow("Full Name",                    data.fullName)
-    + emailRow("Mobile Number",                data.mobile)
-    + emailRow("City",                         data.city)
-    + emailRow("Experience Level",             formatExperience(data.experience))
-    + emailRow("Best Time to Contact",         formatTime(data.contactTime))
-    + emailRow("What They Want to Understand", data.intent)
-    + emailRow("Consent Given",                data.consent ? "Yes" : "No")
-    + emailRow("Timestamp",                    timestamp)
+    + eRow("Full Name",                    data.fullName)
+    + eRow("Mobile Number",                data.mobile)
+    + eRow("City",                         data.city)
+    + eRow("Experience Level",             fmtExp(data.experience))
+    + eRow("Best Time to Contact",         fmtTime(data.contactTime))
+    + eRow("What They Want to Understand", data.intent)
+    + eRow("Consent Given",                data.consent ? "Yes" : "No")
+    + eRow("Timestamp",                    timestamp)
     + "</table>"
     + "<div style='margin-top:24px;padding:14px 18px;background:#dcfce7;border-radius:6px;font-size:13px;color:#166534;'>"
     + "Reply to this email or call the number above to follow up."
-    + "</div>"
-    + "</div></div>";
+    + "</div></div></div>";
 }
 
 function buildEmailPlain(data, timestamp) {
@@ -198,8 +192,8 @@ function buildEmailPlain(data, timestamp) {
     + "Full Name:             " + (data.fullName    || "") + "\n"
     + "Mobile Number:         " + (data.mobile      || "") + "\n"
     + "City:                  " + (data.city        || "") + "\n"
-    + "Experience Level:      " + formatExperience(data.experience) + "\n"
-    + "Best Time to Contact:  " + formatTime(data.contactTime) + "\n"
+    + "Experience Level:      " + fmtExp(data.experience) + "\n"
+    + "Best Time to Contact:  " + fmtTime(data.contactTime) + "\n"
     + "What They Want:\n"       + (data.intent      || "") + "\n"
     + "Consent Given:         " + (data.consent ? "Yes" : "No") + "\n"
     + "Timestamp:             " + timestamp + "\n";
@@ -212,19 +206,19 @@ function jsonOut(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-function emailRow(label, value) {
+function eRow(label, value) {
   return "<tr>"
     + "<td style='padding:10px 12px;font-weight:600;color:#374151;white-space:nowrap;vertical-align:top;width:40%;background:#fff;border-bottom:1px solid #e2e8f0;'>" + label + "</td>"
     + "<td style='padding:10px 12px;color:#1e293b;border-bottom:1px solid #e2e8f0;background:#fff;'>" + (value || "—") + "</td>"
     + "</tr>";
 }
 
-function formatExperience(val) {
-  var map = { beginner:"Complete Beginner", demat:"Have a Demat Account", tried:"Tried Trading", learning:"Learning Actively" };
-  return map[val] || val || "—";
+function fmtExp(val) {
+  var m = { beginner: "Complete Beginner", demat: "Have a Demat Account", tried: "Tried Trading", learning: "Learning Actively" };
+  return m[val] || val || "—";
 }
 
-function formatTime(val) {
-  var map = { morning:"Morning (10AM – 12PM)", afternoon:"Afternoon (1PM – 4PM)", evening:"Evening (5PM – 7PM)" };
-  return map[val] || val || "—";
+function fmtTime(val) {
+  var m = { morning: "Morning (10AM – 12PM)", afternoon: "Afternoon (1PM – 4PM)", evening: "Evening (5PM – 7PM)" };
+  return m[val] || val || "—";
 }

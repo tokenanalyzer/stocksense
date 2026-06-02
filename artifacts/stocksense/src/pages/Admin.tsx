@@ -116,6 +116,23 @@ async function submitNewLead(form: NewLeadForm): Promise<void> {
   });
 }
 
+type ScriptCheckStatus = "unchecked" | "checking" | "ok" | "wrong_version" | "error";
+
+async function checkScriptHealth(): Promise<{ status: ScriptCheckStatus; version?: string; detail?: string }> {
+  if (!APPS_SCRIPT_URL) return { status: "error", detail: "VITE_APPS_SCRIPT_URL not set" };
+  try {
+    const res = await fetch(APPS_SCRIPT_URL);
+    if (!res.ok) return { status: "error", detail: `HTTP ${res.status}` };
+    const json = await res.json() as Record<string, unknown>;
+    if (!json.success) return { status: "error", detail: "Script returned success:false on health check" };
+    const version = json.version as string | undefined;
+    if (version === "3") return { status: "ok", version };
+    return { status: "wrong_version", version: version ?? "unknown (pre-v3)" };
+  } catch (e) {
+    return { status: "error", detail: String(e) };
+  }
+}
+
 /* ─── Mock data ─────────────────────────────────────────────────────────────── */
 const MOCK_LEADS: Lead[] = [
   { rowIndex:2, timestamp:"01/06/2026 09:12:00", fullName:"Priya Sharma",  mobile:"9876543210", city:"Mumbai",    experience:"Complete Beginner",   contactTime:"Morning (10AM – 12PM)",  intent:"Want to understand basics of stock market", consent:"Yes", status:"New" },
@@ -612,6 +629,16 @@ export default function Admin() {
   const [statusFilter, setStatusFilter] = useState<"all" | LeadStatus>("all");
   const [addOpen,      setAddOpen]      = useState(false);
 
+  const [scriptCheck,  setScriptCheck]  = useState<ScriptCheckStatus>("unchecked");
+  const [scriptDetail, setScriptDetail] = useState<string | undefined>();
+
+  async function handleVerifyScript() {
+    setScriptCheck("checking");
+    const result = await checkScriptHealth();
+    setScriptCheck(result.status);
+    setScriptDetail(result.version ?? result.detail);
+  }
+
   function handleLogin(pass: string): boolean {
     const valid = ADMIN_PASSWORD ? pass === ADMIN_PASSWORD : pass.length > 0;
     if (!valid) return false;
@@ -697,6 +724,34 @@ export default function Admin() {
 
           {/* Actions */}
           <div className="flex items-center gap-2">
+            {/* Script health check button */}
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleVerifyScript}
+              disabled={scriptCheck === "checking"}
+              className={`h-8 gap-1.5 text-xs font-medium border ${
+                scriptCheck === "ok"
+                  ? "border-green-700 text-green-400 hover:text-green-300"
+                  : scriptCheck === "wrong_version"
+                  ? "border-amber-700 text-amber-400 hover:text-amber-300"
+                  : scriptCheck === "error"
+                  ? "border-red-700 text-red-400 hover:text-red-300"
+                  : "border-slate-700 text-slate-400 hover:text-white"
+              }`}
+            >
+              {scriptCheck === "checking" ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : scriptCheck === "ok" ? (
+                <CheckCircle2 className="h-3 w-3" />
+              ) : (
+                <BarChart3 className="h-3 w-3" />
+              )}
+              <span className="hidden sm:inline">
+                {scriptCheck === "ok" ? "Script OK" : scriptCheck === "wrong_version" ? "Script Outdated" : scriptCheck === "error" ? "Script Error" : "Verify Script"}
+              </span>
+            </Button>
+
             {/* Add Lead — primary CTA */}
             <Button
               size="sm"
@@ -781,6 +836,38 @@ export default function Admin() {
           <div className="flex items-start gap-3 rounded-xl bg-red-900/30 border border-red-800/50 px-5 py-4 text-sm text-red-300">
             <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
             <div><strong>Could not load leads:</strong> {error}</div>
+          </div>
+        )}
+
+        {/* ── Script health banner (shown after Verify Script is clicked) ── */}
+        {scriptCheck === "ok" && (
+          <div className="flex items-center gap-3 rounded-xl bg-green-900/30 border border-green-700/50 px-5 py-3 text-sm text-green-300">
+            <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-400" />
+            <span><strong>Apps Script v3 is live and correct.</strong> Lead submissions will save to the Google Sheet. Admin reads will work.</span>
+          </div>
+        )}
+        {scriptCheck === "wrong_version" && (
+          <div className="rounded-xl bg-amber-900/30 border border-amber-700/50 px-5 py-4 text-sm text-amber-200 space-y-2">
+            <div className="flex items-center gap-2 font-bold text-amber-300">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              Script version is <code className="bg-amber-900/50 px-1 rounded">{scriptDetail}</code> — needs to be v3 (openById fix)
+            </div>
+            <p className="text-xs text-amber-100/75">Paste the new <code className="bg-amber-900/40 px-1 rounded">Code.gs</code>, save, then Deploy → Manage Deployments → Edit → New version → Deploy.</p>
+            <button onClick={handleVerifyScript} className="inline-flex items-center gap-1.5 text-xs bg-amber-700/50 hover:bg-amber-700/80 text-amber-100 px-3 py-1.5 rounded-lg transition-colors">
+              <RefreshCw className="h-3 w-3" /> Re-check
+            </button>
+          </div>
+        )}
+        {scriptCheck === "error" && (
+          <div className="rounded-xl bg-red-900/30 border border-red-800/50 px-5 py-3 text-sm text-red-300 space-y-1">
+            <div className="flex items-center gap-2 font-bold text-red-400">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              Script health check failed
+            </div>
+            <p className="text-xs text-red-200/70">{scriptDetail}</p>
+            <button onClick={handleVerifyScript} className="inline-flex items-center gap-1.5 text-xs bg-red-800/50 hover:bg-red-800/80 text-red-100 px-3 py-1.5 rounded-lg transition-colors">
+              <RefreshCw className="h-3 w-3" /> Retry
+            </button>
           </div>
         )}
         {!APPS_SCRIPT_URL && (
