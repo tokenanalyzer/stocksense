@@ -6,7 +6,7 @@ import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
   CheckCircle2, BookOpen, ShieldCheck, Target, AlertTriangle,
   ArrowRight, UserCheck, LayoutList, TrendingUp, Star,
-  ChevronRight, Lightbulb, Users, Clock, Loader2, AlertCircle, X
+  ChevronRight, Lightbulb, Users, Clock, Loader2, AlertCircle, X, Menu
 } from "lucide-react";
 import stockSenseLogo from "@assets/file_000000001d8871fa822307813ae000a5_1780324458986.png";
 
@@ -465,6 +465,7 @@ export default function Landing() {
   }, []);
 
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   function handleGateUnlock() {
     setShowPopup(false);
@@ -535,14 +536,53 @@ export default function Landing() {
                 </button>
               ))}
             </nav>
-            <Button
-              onClick={handleBookClick}
-              className="bg-green-600 hover:bg-green-700 text-white h-9 px-5 text-sm font-semibold shadow-none"
-              data-testid="button-nav-book"
-            >
-              Book Free Session
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={handleBookClick}
+                className="hidden md:inline-flex bg-green-600 hover:bg-green-700 text-white h-9 px-5 text-sm font-semibold shadow-none"
+                data-testid="button-nav-book"
+              >
+                Book Free Session
+              </Button>
+              <button
+                className="md:hidden text-slate-300 hover:text-white p-1"
+                onClick={() => setMobileMenuOpen(o => !o)}
+                aria-label="Toggle menu"
+              >
+                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+            </div>
           </div>
+          <AnimatePresence>
+            {mobileMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="md:hidden overflow-hidden bg-slate-900 border-t border-white/10"
+              >
+                <nav className="flex flex-col px-4 py-4 gap-1">
+                  {[["benefits", "Why Learn First"], ["audience", "Who It's For"], ["how-it-works", "How It Works"], ["faq", "FAQ"]].map(([id, label]) => (
+                    <button
+                      key={id}
+                      onClick={() => { scrollTo(id); setMobileMenuOpen(false); }}
+                      className="text-left text-slate-300 hover:text-white text-sm font-medium py-3 border-b border-slate-800 last:border-0 transition-colors"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                  <Button
+                    onClick={() => { handleBookClick(); setMobileMenuOpen(false); }}
+                    className="mt-3 bg-green-600 hover:bg-green-700 text-white w-full font-semibold"
+                    data-testid="button-nav-book-mobile"
+                  >
+                    Book Free Session
+                  </Button>
+                </nav>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </header>
 
         <main>
@@ -994,6 +1034,20 @@ export default function Landing() {
           </div>
         </footer>
       </div>
+
+      {/* ── WhatsApp Floating Button ── */}
+      <a
+        href="https://wa.me/919167514859"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Chat on WhatsApp"
+        className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-lg hover:scale-110 transition-transform"
+        style={{ backgroundColor: "#25D366" }}
+      >
+        <svg viewBox="0 0 32 32" className="w-7 h-7 fill-white" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16.004 2C8.28 2 2 8.28 2 16.004c0 2.47.644 4.888 1.87 7.01L2 30l7.188-1.884A13.94 13.94 0 0016.004 30C23.72 30 30 23.72 30 16.004 30 8.28 23.72 2 16.004 2zm0 25.538a11.49 11.49 0 01-5.86-1.6l-.42-.25-4.268 1.12 1.14-4.16-.274-.43a11.538 11.538 0 1110.682 5.32zm6.32-8.63c-.347-.174-2.054-1.014-2.374-1.13-.32-.115-.553-.173-.786.174-.233.347-.9 1.13-1.103 1.363-.202.232-.405.26-.752.086-.347-.174-1.464-.54-2.788-1.72-1.03-.918-1.725-2.05-1.928-2.397-.202-.347-.022-.534.152-.707.157-.155.347-.405.52-.607.174-.202.232-.347.347-.578.116-.232.058-.435-.029-.608-.087-.174-.786-1.893-1.077-2.594-.283-.682-.572-.59-.786-.6l-.67-.012c-.232 0-.608.087-.926.434-.318.347-1.216 1.188-1.216 2.897s1.245 3.36 1.418 3.593c.174.232 2.45 3.74 5.937 5.244.83.358 1.478.572 1.983.733.833.265 1.59.228 2.189.138.668-.1 2.054-.84 2.345-1.652.29-.812.29-1.508.203-1.653-.087-.144-.32-.23-.666-.405z"/>
+        </svg>
+      </a>
     </>
   );
 }
