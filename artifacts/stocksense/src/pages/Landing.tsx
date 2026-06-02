@@ -8,7 +8,7 @@ import {
   ArrowRight, UserCheck, LayoutList, TrendingUp, Star,
   ChevronRight, Lightbulb, Users, Clock, Loader2, AlertCircle, X, Menu
 } from "lucide-react";
-import stockSenseLogo from "@assets/file_000000001d8871fa822307813ae000a5_1780324458986.png";
+const stockSenseLogo = "/stocksense-logo.png";
 
 import { Button } from "@/components/ui/button";
 import {
