@@ -22,7 +22,7 @@
 // ── CONFIG ────────────────────────────────────────────────────────────────────
 var NOTIFY_EMAIL   = "YOUR_EMAIL@gmail.com";  // ← your Gmail
 var ADMIN_PASSWORD = "CHANGE_ME_NOW";         // ← must match VITE_ADMIN_PASSWORD
-var SHEET_NAME     = "Leads";
+var SHEET_NAME     = "StockSense Leads";
 var BRAND_NAME     = "StockSense";
 // ─────────────────────────────────────────────────────────────────────────────
 
