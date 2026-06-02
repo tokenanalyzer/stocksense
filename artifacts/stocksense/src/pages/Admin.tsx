@@ -663,11 +663,17 @@ export default function Admin() {
             </div>
             <div>
               <h1 className="text-base font-bold text-white leading-tight tracking-tight">StockSense Admin</h1>
-              {lastSync ? (
-                <p className="text-xs text-slate-500 leading-none mt-0.5">Synced {lastSync.toLocaleTimeString()}</p>
-              ) : (
-                <p className="text-xs text-green-500 leading-none mt-0.5">Lead Management</p>
-              )}
+              <div className="flex items-center gap-2 mt-0.5">
+                {lastSync && (
+                  <p className="text-xs text-slate-500 leading-none">Synced {lastSync.toLocaleTimeString()} ·</p>
+                )}
+                <a
+                  href="mailto:stocksense00@gmail.com"
+                  className="text-xs text-green-400 hover:text-green-300 leading-none transition-colors"
+                >
+                  stocksense00@gmail.com
+                </a>
+              </div>
             </div>
           </div>
 
