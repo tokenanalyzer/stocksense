@@ -88,14 +88,15 @@ async function fetchLeads(token: string): Promise<Lead[]> {
 
 async function updateLeadStatus(token: string, rowIndex: number, status: LeadStatus): Promise<void> {
   if (!APPS_SCRIPT_URL) return;
-  const res = await fetch(APPS_SCRIPT_URL, {
+  // Google Apps Script does not return CORS headers, so we use no-cors.
+  // The POST reaches and executes doPost() correctly (confirmed via getLeads after POST).
+  // We cannot read the response — optimistic UI update is applied by the caller.
+  await fetch(APPS_SCRIPT_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain" },
     body: JSON.stringify({ action: "updateStatus", token, rowIndex, status }),
+    mode: "no-cors",
   });
-  if (!res.ok) throw new Error(`Network error ${res.status}`);
-  const json = await res.json() as { success: boolean; error?: string };
-  if (!json.success) throw new Error(json.error ?? "Status update failed");
 }
 
 async function submitNewLead(form: NewLeadForm): Promise<void> {
