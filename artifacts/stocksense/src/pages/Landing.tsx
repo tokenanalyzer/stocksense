@@ -62,7 +62,7 @@ const DEMAT_ACCOUNTS = [
 const formSchema = z.object({
   fullName:          z.string().min(2, "Full name must be at least 2 characters."),
   mobile:            z.string().min(10, "Enter a valid mobile number."),
-  investmentCapital: z.string().min(1, "Please enter your investment capital.").regex(/^\d+$/, "Enter a valid amount (digits only)."),
+  investmentCapital: z.string().min(1, "Please enter your starting capital.").regex(/^\d+$/, "Enter a valid amount (digits only)."),
   dematStatus:       z.string().min(1, "Please select your Demat account status."),
   dematAccount:      z.string().optional(),
   dematAccountOther: z.string().optional(),
@@ -125,13 +125,13 @@ function LeadFormFields({ form, onSubmit, submitLabel = "Request My Free Session
           )} />
         </div>
 
-        {/* 3 — Investment Capital */}
+        {/* 3 — Starting Capital */}
         <FormField control={form.control} name="investmentCapital" render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-slate-700 font-medium text-sm">Investment Capital (₹)</FormLabel>
+            <FormLabel className="text-slate-700 font-medium text-sm">Starting Capital (₹)</FormLabel>
             <FormControl>
               <Input
-                placeholder="Enter your investment capital"
+                placeholder="Enter your starting capital"
                 inputMode="numeric"
                 pattern="[0-9]*"
                 className="h-11 bg-white border-slate-200 focus:border-green-400"
@@ -383,6 +383,8 @@ function LeadGate({ onUnlock }: { onUnlock: () => void }) {
       });
       sessionStorage.setItem(SESSION_KEY, "1");
       setSubmitted(true);
+      // Auto-unlock the page after a brief success display — no extra click required
+      setTimeout(() => onUnlock(), 1800);
     } catch (err) {
       setSubmitError("Something went wrong. Please try again or refresh the page.");
       console.error("Lead submission error:", err);
@@ -435,7 +437,7 @@ function LeadGate({ onUnlock }: { onUnlock: () => void }) {
         {/* Form body */}
         <div className="px-7 py-6">
           {submitted ? (
-            <SuccessState onReset={onUnlock} />
+            <SuccessState />
           ) : (
             <LeadFormFields form={form} onSubmit={handleSubmit} submitLabel="Submit & Access the Page" isSubmitting={isSubmitting} submitError={submitError} />
           )}

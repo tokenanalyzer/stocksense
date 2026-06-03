@@ -192,7 +192,7 @@ function formatCapital(val: string | number | undefined): string {
 function exportCSV(leads: Lead[]) {
   const headers = [
     "Timestamp","Full Name","Mobile",
-    "Investment Capital","Demat Status","Demat Account","Demat Account Other",
+    "Starting Capital","Demat Status","Demat Account","Demat Account Other",
     "City","Experience","Best Time","Intent","Consent","Status"
   ];
   const rows = leads.map(l => [
@@ -244,7 +244,7 @@ function AddLeadModal({
   function validate(): string {
     if (!form.fullName.trim() || form.fullName.trim().length < 2) return "Full name is required (min 2 chars).";
     if (!form.mobile.trim()   || form.mobile.replace(/\D/g,"").length < 10) return "Enter a valid 10-digit mobile number.";
-    if (!form.investmentCapital || !/^\d+$/.test(form.investmentCapital)) return "Enter a valid investment capital amount (digits only).";
+    if (!form.investmentCapital || !/^\d+$/.test(form.investmentCapital)) return "Enter a valid starting capital amount (digits only).";
     if (!form.dematStatus)    return "Please select Demat account status.";
     if (!form.city.trim())    return "City is required.";
     if (!form.experience)     return "Please select experience level.";
@@ -347,9 +347,9 @@ function AddLeadModal({
               </div>
             </div>
 
-            {/* Row 2: Investment Capital */}
+            {/* Row 2: Starting Capital */}
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm">Investment Capital (₹) <span className="text-red-400">*</span></Label>
+              <Label className="text-slate-300 text-sm">Starting Capital (₹) <span className="text-red-400">*</span></Label>
               <Input
                 value={form.investmentCapital}
                 onChange={e => set("investmentCapital", e.target.value.replace(/[^0-9]/g, ""))}
@@ -725,7 +725,7 @@ function LeadDetailDialog({ lead, open, onClose }: { lead: Lead; open: boolean; 
     ["Full Name",          lead.fullName],
     ["Mobile",             lead.mobile],
     ["City",               lead.city],
-    ["Investment Capital", formatCapital(lead.investmentCapital)],
+    ["Starting Capital", formatCapital(lead.investmentCapital)],
     ["Demat Status",       lead.dematStatus || "—"],
     ["Demat Account",      lead.dematAccount || "—"],
     ...(lead.dematAccount === "Other" && lead.dematAccountOther ? [["Other Broker", lead.dematAccountOther] as [string,string]] : []),

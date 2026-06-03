@@ -2,7 +2,7 @@
  * StockSense Lead Capture + Admin API — Google Apps Script v4
  * ─────────────────────────────────────────────────────────────
  * v4 changes:
- *   New fields: Investment Capital, Demat Status, Demat Account, Demat Account Other
+ *   New fields: Starting Capital, Demat Status, Demat Account, Demat Account Other
  *   Migration: automatically inserts 4 new columns on existing 9-column sheets
  *              (City/Experience/etc shift right — no existing data lost)
  *
@@ -13,7 +13,7 @@
  *
  * COLUMN LAYOUT (A–M, 13 columns):
  *   A: Timestamp          B: Full Name          C: Mobile Number
- *   D: Investment Capital E: Demat Status       F: Demat Account  G: Demat Account Other
+ *   D: Starting Capital   E: Demat Status       F: Demat Account  G: Demat Account Other
  *   H: City               I: Experience Level   J: Best Time to Contact
  *   K: What They Want     L: Consent Given      M: Status
  */
@@ -52,7 +52,7 @@ function getSheet() {
     sheet = ss.insertSheet(SHEET_NAME);
     var headers = [
       "Timestamp", "Full Name", "Mobile Number",
-      "Investment Capital (₹)", "Demat Status", "Demat Account", "Demat Account Other",
+      "Starting Capital (₹)", "Demat Status", "Demat Account", "Demat Account Other",
       "City", "Experience Level", "Best Time to Contact",
       "What They Want to Understand", "Consent Given", "Status"
     ];
@@ -68,7 +68,7 @@ function getSheet() {
       // insertColumnsAfter automatically shifts City / Experience / Best Time /
       // Intent / Consent / Status one step right — zero data loss.
       sheet.insertColumnsAfter(3, 4);
-      sheet.getRange(1, 4).setValue("Investment Capital (₹)"); sheet.getRange(1, 4).setFontWeight("bold");
+      sheet.getRange(1, 4).setValue("Starting Capital (₹)"); sheet.getRange(1, 4).setFontWeight("bold");
       sheet.getRange(1, 5).setValue("Demat Status");           sheet.getRange(1, 5).setFontWeight("bold");
       sheet.getRange(1, 6).setValue("Demat Account");          sheet.getRange(1, 6).setFontWeight("bold");
       sheet.getRange(1, 7).setValue("Demat Account Other");    sheet.getRange(1, 7).setFontWeight("bold");
@@ -222,7 +222,7 @@ function buildEmailHtml(data, timestamp) {
     + "<table style='width:100%;border-collapse:collapse;font-size:15px;'>"
     + eRow("Full Name",             data.fullName)
     + eRow("Mobile Number",         data.mobile)
-    + eRow("Investment Capital",    capFmt)
+    + eRow("Starting Capital",      capFmt)
     + eRow("Demat Status",          data.dematStatus || "\u2014")
     + eRow("Demat Account",         data.dematAccount || "\u2014")
     + eRow("Demat Account (Other)", data.dematAccountOther || "\u2014")
@@ -243,7 +243,7 @@ function buildEmailPlain(data, timestamp) {
   return BRAND_NAME + " \u2014 New Lead\n\n"
     + "Full Name:              " + (data.fullName          || "") + "\n"
     + "Mobile Number:          " + (data.mobile            || "") + "\n"
-    + "Investment Capital:     " + capFmt                         + "\n"
+    + "Starting Capital:       " + capFmt                         + "\n"
     + "Demat Status:           " + (data.dematStatus       || "\u2014") + "\n"
     + "Demat Account:          " + (data.dematAccount      || "\u2014") + "\n"
     + "Demat Account (Other):  " + (data.dematAccountOther || "\u2014") + "\n"
