@@ -25,26 +25,34 @@ import { Checkbox } from "@/components/ui/checkbox";
 type LeadStatus = "New" | "Contacted" | "Follow-up" | "Converted";
 
 interface Lead {
-  rowIndex:    number;
-  timestamp:   string;
-  fullName:    string;
-  mobile:      string;
-  city:        string;
-  experience:  string;
-  contactTime: string;
-  intent:      string;
-  consent:     string;
-  status:      LeadStatus;
+  rowIndex:          number;
+  timestamp:         string;
+  fullName:          string;
+  mobile:            string;
+  investmentCapital: string;
+  dematStatus:       string;
+  dematAccount:      string;
+  dematAccountOther: string;
+  city:              string;
+  experience:        string;
+  contactTime:       string;
+  intent:            string;
+  consent:           string;
+  status:            LeadStatus;
 }
 
 interface NewLeadForm {
-  fullName:    string;
-  mobile:      string;
-  city:        string;
-  experience:  string;
-  contactTime: string;
-  intent:      string;
-  consent:     boolean;
+  fullName:          string;
+  mobile:            string;
+  investmentCapital: string;
+  dematStatus:       string;
+  dematAccount:      string;
+  dematAccountOther: string;
+  city:              string;
+  experience:        string;
+  contactTime:       string;
+  intent:            string;
+  consent:           boolean;
 }
 
 /* ─── Config ────────────────────────────────────────────────────────────────── */
@@ -53,9 +61,16 @@ const ADMIN_PASSWORD  = import.meta.env.VITE_ADMIN_PASSWORD  as string | undefin
 const ADMIN_SESSION   = "stocksense_admin";
 
 const EMPTY_FORM: NewLeadForm = {
-  fullName: "", mobile: "", city: "",
-  experience: "", contactTime: "", intent: "", consent: false,
+  fullName: "", mobile: "", investmentCapital: "",
+  dematStatus: "", dematAccount: "", dematAccountOther: "",
+  city: "", experience: "", contactTime: "", intent: "", consent: false,
 };
+
+const DEMAT_ACCOUNTS_ADMIN = [
+  "Zerodha","Groww","Angel One","Upstox","ICICI Direct","HDFC Securities",
+  "Kotak Securities","Motilal Oswal","Sharekhan","Dhan","FYERS","5Paisa",
+  "Paytm Money","Alice Blue","Other"
+] as const;
 
 /* ─── API helpers ───────────────────────────────────────────────────────────── */
 async function fetchLeads(token: string): Promise<Lead[]> {
@@ -105,13 +120,17 @@ async function submitNewLead(form: NewLeadForm): Promise<void> {
     method: "POST",
     headers: { "Content-Type": "text/plain" },
     body: JSON.stringify({
-      fullName:    form.fullName,
-      mobile:      form.mobile,
-      city:        form.city,
-      experience:  form.experience,
-      contactTime: form.contactTime,
-      intent:      form.intent,
-      consent:     form.consent,
+      fullName:          form.fullName,
+      mobile:            form.mobile,
+      investmentCapital: form.investmentCapital ? Number(form.investmentCapital) : "",
+      dematStatus:       form.dematStatus,
+      dematAccount:      form.dematAccount,
+      dematAccountOther: form.dematAccountOther,
+      city:              form.city,
+      experience:        form.experience,
+      contactTime:       form.contactTime,
+      intent:            form.intent,
+      consent:           form.consent,
     }),
     mode: "no-cors",
   });
@@ -127,7 +146,7 @@ async function checkScriptHealth(): Promise<{ status: ScriptCheckStatus; version
     const json = await res.json() as Record<string, unknown>;
     if (!json.success) return { status: "error", detail: "Script returned success:false on health check" };
     const version = json.version as string | undefined;
-    if (version === "3") return { status: "ok", version };
+    if (version === "4" || version === "3") return { status: "ok", version };
     return { status: "wrong_version", version: version ?? "unknown (pre-v3)" };
   } catch (e) {
     return { status: "error", detail: String(e) };
@@ -136,11 +155,11 @@ async function checkScriptHealth(): Promise<{ status: ScriptCheckStatus; version
 
 /* ─── Mock data ─────────────────────────────────────────────────────────────── */
 const MOCK_LEADS: Lead[] = [
-  { rowIndex:2, timestamp:"01/06/2026 09:12:00", fullName:"Priya Sharma",  mobile:"9876543210", city:"Mumbai",    experience:"Complete Beginner",   contactTime:"Morning (10AM – 12PM)",  intent:"Want to understand basics of stock market", consent:"Yes", status:"New" },
-  { rowIndex:3, timestamp:"01/06/2026 10:34:00", fullName:"Rahul Mehta",   mobile:"9123456789", city:"Pune",      experience:"Have a Demat Account", contactTime:"Evening (5PM – 7PM)",    intent:"Opened demat but no idea what to do",      consent:"Yes", status:"Contacted" },
-  { rowIndex:4, timestamp:"01/06/2026 11:55:00", fullName:"Anjali Singh",  mobile:"9988776655", city:"Delhi",     experience:"Tried Trading",         contactTime:"Afternoon (1PM – 4PM)", intent:"Lost money, want to learn properly",        consent:"Yes", status:"Follow-up" },
-  { rowIndex:5, timestamp:"31/05/2026 14:22:00", fullName:"Vikram Nair",   mobile:"9871234560", city:"Bangalore", experience:"Learning Actively",     contactTime:"Morning (10AM – 12PM)",  intent:"Want structured curriculum",               consent:"Yes", status:"Converted" },
-  { rowIndex:6, timestamp:"31/05/2026 16:45:00", fullName:"Sneha Patel",   mobile:"9765432109", city:"Ahmedabad", experience:"Complete Beginner",     contactTime:"Evening (5PM – 7PM)",    intent:"Curious about long-term investing",        consent:"Yes", status:"New" },
+  { rowIndex:2, timestamp:"01/06/2026 09:12:00", fullName:"Priya Sharma",  mobile:"9876543210", investmentCapital:"50000",  dematStatus:"Yes",        dematAccount:"Zerodha",   dematAccountOther:"", city:"Mumbai",    experience:"Complete Beginner",   contactTime:"Morning (10AM – 12PM)",  intent:"Want to understand basics of stock market", consent:"Yes", status:"New" },
+  { rowIndex:3, timestamp:"01/06/2026 10:34:00", fullName:"Rahul Mehta",   mobile:"9123456789", investmentCapital:"100000", dematStatus:"Yes",        dematAccount:"Groww",     dematAccountOther:"", city:"Pune",      experience:"Have a Demat Account", contactTime:"Evening (5PM – 7PM)",    intent:"Opened demat but no idea what to do",      consent:"Yes", status:"Contacted" },
+  { rowIndex:4, timestamp:"01/06/2026 11:55:00", fullName:"Anjali Singh",  mobile:"9988776655", investmentCapital:"25000",  dematStatus:"In Process", dematAccount:"",          dematAccountOther:"", city:"Delhi",     experience:"Tried Trading",         contactTime:"Afternoon (1PM – 4PM)", intent:"Lost money, want to learn properly",        consent:"Yes", status:"Follow-up" },
+  { rowIndex:5, timestamp:"31/05/2026 14:22:00", fullName:"Vikram Nair",   mobile:"9871234560", investmentCapital:"200000", dematStatus:"Yes",        dematAccount:"Angel One", dematAccountOther:"", city:"Bangalore", experience:"Learning Actively",     contactTime:"Morning (10AM – 12PM)",  intent:"Want structured curriculum",               consent:"Yes", status:"Converted" },
+  { rowIndex:6, timestamp:"31/05/2026 16:45:00", fullName:"Sneha Patel",   mobile:"9765432109", investmentCapital:"10000",  dematStatus:"No",         dematAccount:"",          dematAccountOther:"", city:"Ahmedabad", experience:"Complete Beginner",     contactTime:"Evening (5PM – 7PM)",    intent:"Curious about long-term investing",        consent:"Yes", status:"New" },
 ];
 
 /* ─── Stats ─────────────────────────────────────────────────────────────────── */
@@ -161,12 +180,26 @@ function computeStats(leads: Lead[]) {
   return { total: leads.length, today, weekly, converted };
 }
 
+/* ─── Capital formatter (Indian locale) ─────────────────────────────────────── */
+function formatCapital(val: string | number | undefined): string {
+  if (val === "" || val == null) return "—";
+  const num = typeof val === "number" ? val : parseInt(String(val), 10);
+  if (isNaN(num)) return String(val) || "—";
+  return "₹" + num.toLocaleString("en-IN");
+}
+
 /* ─── CSV export ────────────────────────────────────────────────────────────── */
 function exportCSV(leads: Lead[]) {
-  const headers = ["Timestamp","Full Name","Mobile","City","Experience","Best Time","Intent","Consent","Status"];
-  const rows    = leads.map(l => [
-    `"${l.timestamp}"`, `"${l.fullName}"`, `"${l.mobile}"`, `"${l.city}"`,
-    `"${l.experience}"`, `"${l.contactTime}"`, `"${l.intent.replace(/"/g,'""')}"`,
+  const headers = [
+    "Timestamp","Full Name","Mobile",
+    "Investment Capital","Demat Status","Demat Account","Demat Account Other",
+    "City","Experience","Best Time","Intent","Consent","Status"
+  ];
+  const rows = leads.map(l => [
+    `"${l.timestamp}"`, `"${l.fullName}"`, `"${l.mobile}"`,
+    `"${l.investmentCapital}"`, `"${l.dematStatus}"`, `"${l.dematAccount}"`, `"${l.dematAccountOther}"`,
+    `"${l.city}"`, `"${l.experience}"`, `"${l.contactTime}"`,
+    `"${(l.intent || "").replace(/"/g,'""')}"`,
     `"${l.consent}"`, `"${l.status}"`
   ].join(","));
   const csv  = [headers.join(","), ...rows].join("\n");
@@ -209,13 +242,14 @@ function AddLeadModal({
   }
 
   function validate(): string {
-    if (!form.fullName.trim()    || form.fullName.trim().length < 2)  return "Full name is required (min 2 chars).";
-    if (!form.mobile.trim()      || form.mobile.replace(/\D/g,"").length < 10) return "Enter a valid 10-digit mobile number.";
-    if (!form.city.trim())        return "City is required.";
-    if (!form.experience)         return "Please select experience level.";
-    if (!form.contactTime)        return "Please select best time to contact.";
-    if (!form.intent.trim()      || form.intent.trim().length < 5)    return "Please describe what they want to learn.";
-    if (!form.consent)            return "Consent is required.";
+    if (!form.fullName.trim() || form.fullName.trim().length < 2) return "Full name is required (min 2 chars).";
+    if (!form.mobile.trim()   || form.mobile.replace(/\D/g,"").length < 10) return "Enter a valid 10-digit mobile number.";
+    if (!form.investmentCapital || !/^\d+$/.test(form.investmentCapital)) return "Enter a valid investment capital amount (digits only).";
+    if (!form.dematStatus)    return "Please select Demat account status.";
+    if (!form.city.trim())    return "City is required.";
+    if (!form.experience)     return "Please select experience level.";
+    if (!form.contactTime)    return "Please select best time to contact.";
+    if (!form.consent)        return "Consent is required.";
     return "";
   }
 
@@ -313,7 +347,64 @@ function AddLeadModal({
               </div>
             </div>
 
-            {/* Row 2: City */}
+            {/* Row 2: Investment Capital */}
+            <div className="space-y-1.5">
+              <Label className="text-slate-300 text-sm">Investment Capital (₹) <span className="text-red-400">*</span></Label>
+              <Input
+                value={form.investmentCapital}
+                onChange={e => set("investmentCapital", e.target.value.replace(/[^0-9]/g, ""))}
+                placeholder="e.g. 50000"
+                inputMode="numeric"
+                className="h-10 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-green-500"
+              />
+            </div>
+
+            {/* Row 3: Demat Status */}
+            <div className="space-y-1.5">
+              <Label className="text-slate-300 text-sm">Do They Have a Demat Account? <span className="text-red-400">*</span></Label>
+              <Select value={form.dematStatus} onValueChange={v => set("dematStatus", v)}>
+                <SelectTrigger className="h-10 bg-slate-800 border-slate-700 text-slate-300 focus:border-green-500">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900 border-slate-700">
+                  <SelectItem value="Yes"        className="text-slate-200 focus:bg-slate-800">Yes</SelectItem>
+                  <SelectItem value="No"         className="text-slate-200 focus:bg-slate-800">No</SelectItem>
+                  <SelectItem value="In Process" className="text-slate-200 focus:bg-slate-800">In Process</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Row 4: Demat Account (conditional) */}
+            {(form.dematStatus === "Yes" || form.dematStatus === "In Process") && (
+              <div className="space-y-1.5">
+                <Label className="text-slate-300 text-sm">Which Demat Account?</Label>
+                <Select value={form.dematAccount} onValueChange={v => set("dematAccount", v)}>
+                  <SelectTrigger className="h-10 bg-slate-800 border-slate-700 text-slate-300 focus:border-green-500">
+                    <SelectValue placeholder="Select broker" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-900 border-slate-700">
+                    {DEMAT_ACCOUNTS_ADMIN.map(a => (
+                      <SelectItem key={a} value={a} className="text-slate-200 focus:bg-slate-800">{a}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Row 5: Demat Account Other (conditional) */}
+            {form.dematAccount === "Other" && (
+              <div className="space-y-1.5">
+                <Label className="text-slate-300 text-sm">Other Demat Account Name</Label>
+                <Input
+                  value={form.dematAccountOther}
+                  onChange={e => set("dematAccountOther", e.target.value)}
+                  placeholder="Broker name"
+                  className="h-10 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500 focus:border-green-500"
+                />
+              </div>
+            )}
+
+            {/* Row 6: City */}
             <div className="space-y-1.5">
               <Label className="text-slate-300 text-sm">City <span className="text-red-400">*</span></Label>
               <Input
@@ -324,7 +415,7 @@ function AddLeadModal({
               />
             </div>
 
-            {/* Row 3: Experience + Best Time */}
+            {/* Row 7: Experience + Best Time */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-slate-300 text-sm">Experience Level <span className="text-red-400">*</span></Label>
@@ -355,9 +446,12 @@ function AddLeadModal({
               </div>
             </div>
 
-            {/* Row 4: Intent */}
+            {/* Row 8: Intent (optional) */}
             <div className="space-y-1.5">
-              <Label className="text-slate-300 text-sm">What do they want to understand? <span className="text-red-400">*</span></Label>
+              <Label className="text-slate-300 text-sm">
+                What do they want to understand?{" "}
+                <span className="text-slate-500 font-normal text-xs">(Optional)</span>
+              </Label>
               <Textarea
                 value={form.intent}
                 onChange={e => set("intent", e.target.value)}
@@ -367,7 +461,7 @@ function AddLeadModal({
               />
             </div>
 
-            {/* Row 5: Consent */}
+            {/* Row 9: Consent */}
             <div className="flex items-start gap-3 p-3 rounded-lg bg-slate-800/60 border border-slate-700">
               <Checkbox
                 id="admin-consent"
@@ -500,7 +594,8 @@ function StatCard({ title, value, icon, sub }: { title: string; value: number | 
 
 /* ─── Lead Table Row (desktop) ──────────────────────────────────────────────── */
 function LeadTableRow({ lead, token, onStatusChange }: { lead: Lead; token: string; onStatusChange: (idx: number, s: LeadStatus) => void }) {
-  const [updating, setUpdating] = useState(false);
+  const [updating,  setUpdating]  = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   async function handleStatus(val: string) {
     const s = val as LeadStatus;
@@ -513,54 +608,56 @@ function LeadTableRow({ lead, token, onStatusChange }: { lead: Lead; token: stri
   const waMsg = encodeURIComponent(`Hi ${lead.fullName}, this is StockSense team. We saw your enquiry and would love to connect. Is this a good time?`);
 
   return (
-    <TableRow className="border-slate-800 hover:bg-slate-800/50">
-      <TableCell className="py-3">
-        <p className="font-semibold text-white text-sm">{lead.fullName}</p>
-        <p className="text-slate-500 text-xs">{lead.city}</p>
-      </TableCell>
-      <TableCell className="py-3 text-slate-200 text-sm">{lead.mobile}</TableCell>
-      <TableCell className="py-3 hidden md:table-cell text-slate-400 text-xs">{lead.experience}</TableCell>
-      <TableCell className="py-3 hidden lg:table-cell text-slate-400 text-xs">{lead.contactTime}</TableCell>
-      <TableCell className="py-3 hidden xl:table-cell max-w-[200px]">
-        <p className="text-slate-400 text-xs truncate" title={lead.intent}>{lead.intent}</p>
-      </TableCell>
-      <TableCell className="py-3 text-xs text-slate-500 hidden lg:table-cell whitespace-nowrap">{lead.timestamp}</TableCell>
-      <TableCell className="py-3">
-        <Select value={lead.status} onValueChange={handleStatus} disabled={updating}>
-          <SelectTrigger className="h-7 w-[120px] text-xs border-0 bg-transparent p-0 focus:ring-0 gap-1">
-            <StatusBadge status={lead.status} />
-            {updating ? <Loader2 className="h-3 w-3 animate-spin text-slate-400" /> : <ChevronDown className="h-3 w-3 text-slate-500" />}
-          </SelectTrigger>
-          <SelectContent className="bg-slate-900 border-slate-700">
-            {(["New","Contacted","Follow-up","Converted"] as LeadStatus[]).map(s => (
-              <SelectItem key={s} value={s} className="text-slate-200 focus:bg-slate-800 focus:text-white text-xs">
-                <StatusBadge status={s} />
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </TableCell>
-      <TableCell className="py-3">
-        <div className="flex items-center gap-1.5">
-          <a href={`https://wa.me/${lead.mobile.replace(/\D/g,"")}?text=${waMsg}`} target="_blank" rel="noopener noreferrer" title="WhatsApp">
-            <Button size="icon" variant="ghost" className="h-7 w-7 text-green-400 hover:text-green-300 hover:bg-green-900/30">
-              <MessageCircle className="h-4 w-4" />
-            </Button>
-          </a>
-          <a href={`tel:${lead.mobile}`} title="Call">
-            <Button size="icon" variant="ghost" className="h-7 w-7 text-blue-400 hover:text-blue-300 hover:bg-blue-900/30">
-              <Phone className="h-4 w-4" />
-            </Button>
-          </a>
-        </div>
-      </TableCell>
-    </TableRow>
+    <>
+      <LeadDetailDialog lead={lead} open={detailOpen} onClose={() => setDetailOpen(false)} />
+      <TableRow className="border-slate-800 hover:bg-slate-800/50 cursor-pointer" onClick={() => setDetailOpen(true)}>
+        <TableCell className="py-3" onClick={e => e.stopPropagation()}>
+          <p className="font-semibold text-white text-sm">{lead.fullName}</p>
+          <p className="text-slate-500 text-xs">{lead.city}</p>
+        </TableCell>
+        <TableCell className="py-3 text-slate-200 text-sm">{lead.mobile}</TableCell>
+        <TableCell className="py-3 hidden md:table-cell text-slate-300 text-xs font-medium">{formatCapital(lead.investmentCapital)}</TableCell>
+        <TableCell className="py-3 hidden lg:table-cell text-slate-400 text-xs">{lead.dematStatus || "—"}</TableCell>
+        <TableCell className="py-3 hidden xl:table-cell text-slate-400 text-xs">{lead.experience}</TableCell>
+        <TableCell className="py-3 text-xs text-slate-500 hidden lg:table-cell whitespace-nowrap">{lead.timestamp}</TableCell>
+        <TableCell className="py-3" onClick={e => e.stopPropagation()}>
+          <Select value={lead.status} onValueChange={handleStatus} disabled={updating}>
+            <SelectTrigger className="h-7 w-[120px] text-xs border-0 bg-transparent p-0 focus:ring-0 gap-1">
+              <StatusBadge status={lead.status} />
+              {updating ? <Loader2 className="h-3 w-3 animate-spin text-slate-400" /> : <ChevronDown className="h-3 w-3 text-slate-500" />}
+            </SelectTrigger>
+            <SelectContent className="bg-slate-900 border-slate-700">
+              {(["New","Contacted","Follow-up","Converted"] as LeadStatus[]).map(s => (
+                <SelectItem key={s} value={s} className="text-slate-200 focus:bg-slate-800 focus:text-white text-xs">
+                  <StatusBadge status={s} />
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </TableCell>
+        <TableCell className="py-3" onClick={e => e.stopPropagation()}>
+          <div className="flex items-center gap-1.5">
+            <a href={`https://wa.me/${lead.mobile.replace(/\D/g,"")}?text=${waMsg}`} target="_blank" rel="noopener noreferrer" title="WhatsApp">
+              <Button size="icon" variant="ghost" className="h-7 w-7 text-green-400 hover:text-green-300 hover:bg-green-900/30">
+                <MessageCircle className="h-4 w-4" />
+              </Button>
+            </a>
+            <a href={`tel:${lead.mobile}`} title="Call">
+              <Button size="icon" variant="ghost" className="h-7 w-7 text-blue-400 hover:text-blue-300 hover:bg-blue-900/30">
+                <Phone className="h-4 w-4" />
+              </Button>
+            </a>
+          </div>
+        </TableCell>
+      </TableRow>
+    </>
   );
 }
 
 /* ─── Lead Card (mobile) ────────────────────────────────────────────────────── */
 function LeadCard({ lead, token, onStatusChange }: { lead: Lead; token: string; onStatusChange: (idx: number, s: LeadStatus) => void }) {
-  const [updating, setUpdating] = useState(false);
+  const [updating,   setUpdating]   = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
 
   async function handleStatus(val: string) {
     const s = val as LeadStatus;
@@ -573,47 +670,104 @@ function LeadCard({ lead, token, onStatusChange }: { lead: Lead; token: string; 
   const waMsg = encodeURIComponent(`Hi ${lead.fullName}, this is StockSense team. We saw your enquiry and would love to connect.`);
 
   return (
-    <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 space-y-3">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="font-semibold text-white">{lead.fullName}</p>
-          <p className="text-slate-400 text-sm">{lead.mobile} · {lead.city}</p>
+    <>
+      <LeadDetailDialog lead={lead} open={detailOpen} onClose={() => setDetailOpen(false)} />
+      <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <button onClick={() => setDetailOpen(true)} className="text-left flex-1">
+            <p className="font-semibold text-white hover:text-green-400 transition-colors">{lead.fullName}</p>
+            <p className="text-slate-400 text-sm">{lead.mobile} · {lead.city}</p>
+          </button>
+          <StatusBadge status={lead.status} />
         </div>
-        <StatusBadge status={lead.status} />
-      </div>
-      <p className="text-slate-500 text-xs">{lead.experience} · {lead.contactTime}</p>
-      {lead.intent && <p className="text-slate-400 text-xs leading-relaxed line-clamp-2">{lead.intent}</p>}
-      <p className="text-slate-600 text-xs">{lead.timestamp}</p>
-      <div className="flex items-center justify-between pt-1">
-        <Select value={lead.status} onValueChange={handleStatus} disabled={updating}>
-          <SelectTrigger className="h-8 w-[140px] text-xs bg-slate-800 border-slate-700 text-slate-300">
-            <SelectValue />
-            {updating && <Loader2 className="h-3 w-3 animate-spin ml-1" />}
-          </SelectTrigger>
-          <SelectContent className="bg-slate-900 border-slate-700">
-            {(["New","Contacted","Follow-up","Converted"] as LeadStatus[]).map(s => (
-              <SelectItem key={s} value={s} className="text-slate-200 focus:bg-slate-800 text-xs">{s}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <div className="flex gap-2">
-          <a href={`https://wa.me/${lead.mobile.replace(/\D/g,"")}?text=${waMsg}`} target="_blank" rel="noopener noreferrer">
-            <Button size="sm" className="h-8 bg-green-700 hover:bg-green-600 text-white gap-1.5 text-xs">
-              <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
-            </Button>
-          </a>
-          <a href={`tel:${lead.mobile}`}>
-            <Button size="sm" variant="outline" className="h-8 border-slate-700 text-slate-300 hover:text-white gap-1.5 text-xs">
-              <Phone className="h-3.5 w-3.5" /> Call
-            </Button>
-          </a>
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500">
+          {lead.investmentCapital && <span className="text-slate-300 font-medium">{formatCapital(lead.investmentCapital)}</span>}
+          {lead.dematStatus && <span>{lead.dematStatus}{lead.dematAccount ? ` · ${lead.dematAccount}` : ""}</span>}
+          <span>{lead.experience}</span>
+          <span>{lead.contactTime}</span>
+        </div>
+        {lead.intent && <p className="text-slate-400 text-xs leading-relaxed line-clamp-2">{lead.intent}</p>}
+        <p className="text-slate-600 text-xs">{lead.timestamp}</p>
+        <div className="flex items-center justify-between pt-1">
+          <Select value={lead.status} onValueChange={handleStatus} disabled={updating}>
+            <SelectTrigger className="h-8 w-[140px] text-xs bg-slate-800 border-slate-700 text-slate-300">
+              <SelectValue />
+              {updating && <Loader2 className="h-3 w-3 animate-spin ml-1" />}
+            </SelectTrigger>
+            <SelectContent className="bg-slate-900 border-slate-700">
+              {(["New","Contacted","Follow-up","Converted"] as LeadStatus[]).map(s => (
+                <SelectItem key={s} value={s} className="text-slate-200 focus:bg-slate-800 text-xs">{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex gap-2">
+            <a href={`https://wa.me/${lead.mobile.replace(/\D/g,"")}?text=${waMsg}`} target="_blank" rel="noopener noreferrer">
+              <Button size="sm" className="h-8 bg-green-700 hover:bg-green-600 text-white gap-1.5 text-xs">
+                <MessageCircle className="h-3.5 w-3.5" /> WA
+              </Button>
+            </a>
+            <a href={`tel:${lead.mobile}`}>
+              <Button size="sm" variant="outline" className="h-8 border-slate-700 text-slate-300 hover:text-white gap-1.5 text-xs">
+                <Phone className="h-3.5 w-3.5" /> Call
+              </Button>
+            </a>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
-/* ─── Main Admin Page ───────────────────────────────────────────────────────── */
+/* ─── Lead Detail Dialog ────────────────────────────────────────────────────── */
+function LeadDetailDialog({ lead, open, onClose }: { lead: Lead; open: boolean; onClose: () => void }) {
+  const waMsg = encodeURIComponent(`Hi ${lead.fullName}, this is StockSense team. We saw your enquiry and would love to connect. Is this a good time?`);
+  const rows: [string, string][] = [
+    ["Full Name",          lead.fullName],
+    ["Mobile",             lead.mobile],
+    ["City",               lead.city],
+    ["Investment Capital", formatCapital(lead.investmentCapital)],
+    ["Demat Status",       lead.dematStatus || "—"],
+    ["Demat Account",      lead.dematAccount || "—"],
+    ...(lead.dematAccount === "Other" && lead.dematAccountOther ? [["Other Broker", lead.dematAccountOther] as [string,string]] : []),
+    ["Experience",         lead.experience],
+    ["Best Time",          lead.contactTime],
+    ["Intent",             lead.intent || "—"],
+    ["Consent",            lead.consent],
+    ["Status",             lead.status],
+    ["Timestamp",          lead.timestamp],
+  ];
+  return (
+    <Dialog open={open} onOpenChange={v => !v && onClose()}>
+      <DialogContent className="bg-slate-900 border border-slate-700 text-white max-w-lg w-full">
+        <DialogHeader>
+          <DialogTitle className="text-white text-lg">{lead.fullName}</DialogTitle>
+          <DialogDescription className="text-slate-400 text-sm">{lead.mobile} · {lead.city}</DialogDescription>
+        </DialogHeader>
+        <div className="mt-2 grid grid-cols-1 gap-2 text-sm max-h-[60vh] overflow-y-auto pr-1">
+          {rows.map(([label, val]) => (
+            <div key={label} className="flex items-start gap-3 py-2 border-b border-slate-800 last:border-0">
+              <span className="text-slate-500 min-w-[140px] shrink-0">{label}</span>
+              <span className="text-slate-200 break-words">{val}</span>
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-3 mt-4 pt-4 border-t border-slate-800">
+          <a href={`https://wa.me/${lead.mobile.replace(/\D/g,"")}?text=${waMsg}`} target="_blank" rel="noopener noreferrer" className="flex-1">
+            <Button className="w-full h-9 bg-green-700 hover:bg-green-600 text-white gap-2 text-sm">
+              <MessageCircle className="h-4 w-4" /> WhatsApp
+            </Button>
+          </a>
+          <a href={`tel:${lead.mobile}`} className="flex-1">
+            <Button variant="outline" className="w-full h-9 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 gap-2 text-sm">
+              <Phone className="h-4 w-4" /> Call
+            </Button>
+          </a>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function Admin() {
   const [, setLocation] = useLocation();
 
@@ -844,14 +998,14 @@ export default function Admin() {
         {scriptCheck === "ok" && (
           <div className="flex items-center gap-3 rounded-xl bg-green-900/30 border border-green-700/50 px-5 py-3 text-sm text-green-300">
             <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-400" />
-            <span><strong>Apps Script v3 is live and correct.</strong> Lead submissions will save to the Google Sheet. Admin reads will work.</span>
+            <span><strong>Apps Script v3/v4 is live and correct.</strong> Lead submissions will save to the Google Sheet. Admin reads will work.</span>
           </div>
         )}
         {scriptCheck === "wrong_version" && (
           <div className="rounded-xl bg-amber-900/30 border border-amber-700/50 px-5 py-4 text-sm text-amber-200 space-y-2">
             <div className="flex items-center gap-2 font-bold text-amber-300">
               <AlertCircle className="h-4 w-4 flex-shrink-0" />
-              Script version is <code className="bg-amber-900/50 px-1 rounded">{scriptDetail}</code> — needs to be v3 (openById fix)
+              Script version is <code className="bg-amber-900/50 px-1 rounded">{scriptDetail}</code> — needs to be v3 or v4 (deploy latest Code.gs)
             </div>
             <p className="text-xs text-amber-100/75">Paste the new <code className="bg-amber-900/40 px-1 rounded">Code.gs</code>, save, then Deploy → Manage Deployments → Edit → New version → Deploy.</p>
             <button onClick={handleVerifyScript} className="inline-flex items-center gap-1.5 text-xs bg-amber-700/50 hover:bg-amber-700/80 text-amber-100 px-3 py-1.5 rounded-lg transition-colors">
@@ -964,9 +1118,9 @@ export default function Admin() {
                   <TableRow className="border-slate-800 hover:bg-transparent">
                     <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3">Name / City</TableHead>
                     <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3">Mobile</TableHead>
-                    <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3 hidden md:table-cell">Experience</TableHead>
-                    <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3 hidden lg:table-cell">Best Time</TableHead>
-                    <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3 hidden xl:table-cell">Intent</TableHead>
+                    <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3 hidden md:table-cell">Capital</TableHead>
+                    <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3 hidden lg:table-cell">Demat</TableHead>
+                    <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3 hidden xl:table-cell">Experience</TableHead>
                     <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3 hidden lg:table-cell">Timestamp</TableHead>
                     <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3">Status</TableHead>
                     <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3">Actions</TableHead>

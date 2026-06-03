@@ -53,14 +53,24 @@ async function submitLead(values: Record<string, unknown>): Promise<void> {
 }
 
 /* ─── Form schema (shared by popup + inline form) ─────────────────────────── */
+const DEMAT_ACCOUNTS = [
+  "Zerodha","Groww","Angel One","Upstox","ICICI Direct","HDFC Securities",
+  "Kotak Securities","Motilal Oswal","Sharekhan","Dhan","FYERS","5Paisa",
+  "Paytm Money","Alice Blue","Other"
+] as const;
+
 const formSchema = z.object({
-  fullName:    z.string().min(2, "Full name must be at least 2 characters."),
-  mobile:      z.string().min(10, "Enter a valid mobile number."),
-  city:        z.string().min(2, "City is required."),
-  experience:  z.string().min(1, "Please select your experience level."),
-  intent:      z.string().min(10, "Please briefly describe what you want to learn."),
-  contactTime: z.string().min(1, "Please select the best time to contact you."),
-  consent: z.boolean().refine(v => v === true, "You must agree to be contacted.")
+  fullName:          z.string().min(2, "Full name must be at least 2 characters."),
+  mobile:            z.string().min(10, "Enter a valid mobile number."),
+  investmentCapital: z.string().min(1, "Please enter your investment capital.").regex(/^\d+$/, "Enter a valid amount (digits only)."),
+  dematStatus:       z.string().min(1, "Please select your Demat account status."),
+  dematAccount:      z.string().optional(),
+  dematAccountOther: z.string().optional(),
+  city:              z.string().min(2, "City is required."),
+  experience:        z.string().min(1, "Please select your experience level."),
+  contactTime:       z.string().min(1, "Please select the best time to contact you."),
+  intent:            z.string().optional(),
+  consent:           z.boolean().refine(v => v === true, "You must agree to be contacted.")
 });
 type FormValues = z.infer<typeof formSchema>;
 
@@ -84,9 +94,16 @@ function LeadFormFields({ form, onSubmit, submitLabel = "Request My Free Session
   isSubmitting?: boolean;
   submitError?: string;
 }) {
+  const dematStatus  = form.watch("dematStatus");
+  const dematAccount = form.watch("dematAccount");
+  const showDematAccount      = dematStatus === "Yes" || dematStatus === "In Process";
+  const showDematAccountOther = dematAccount === "Other";
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+
+        {/* 1 & 2 — Full Name + Mobile */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="fullName" render={({ field }) => (
             <FormItem>
@@ -101,13 +118,93 @@ function LeadFormFields({ form, onSubmit, submitLabel = "Request My Free Session
             <FormItem>
               <FormLabel className="text-slate-700 font-medium text-sm">Mobile Number</FormLabel>
               <FormControl>
-                <Input placeholder="+91 98765 43210" className="h-11 bg-white border-slate-200 focus:border-green-400" data-testid="input-mobile" {...field} />
+                <Input placeholder="+91 98765 43210" inputMode="tel" className="h-11 bg-white border-slate-200 focus:border-green-400" data-testid="input-mobile" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )} />
         </div>
 
+        {/* 3 — Investment Capital */}
+        <FormField control={form.control} name="investmentCapital" render={({ field }) => (
+          <FormItem>
+            <FormLabel className="text-slate-700 font-medium text-sm">Investment Capital (₹)</FormLabel>
+            <FormControl>
+              <Input
+                placeholder="Enter your investment capital"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                className="h-11 bg-white border-slate-200 focus:border-green-400"
+                data-testid="input-investment-capital"
+                {...field}
+                onChange={e => field.onChange(e.target.value.replace(/[^0-9]/g, ""))}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        {/* 4 — Demat Status */}
+        <FormField control={form.control} name="dematStatus" render={({ field }) => (
+          <FormItem>
+            <FormLabel className="text-slate-700 font-medium text-sm">Do You Have a Demat Account?</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger className="h-11 bg-white border-slate-200" data-testid="select-demat-status">
+                  <SelectValue placeholder="Select option" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="Yes">Yes</SelectItem>
+                <SelectItem value="No">No</SelectItem>
+                <SelectItem value="In Process">In Process</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )} />
+
+        {/* 5 — Demat Account (conditional: shown when Yes or In Process) */}
+        {showDematAccount && (
+          <FormField control={form.control} name="dematAccount" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-slate-700 font-medium text-sm">Which Demat Account Do You Use?</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger className="h-11 bg-white border-slate-200" data-testid="select-demat-account">
+                    <SelectValue placeholder="Select your broker" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {DEMAT_ACCOUNTS.map(a => (
+                    <SelectItem key={a} value={a}>{a}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )} />
+        )}
+
+        {/* 5b — Other Demat Account (conditional: shown when dematAccount === "Other") */}
+        {showDematAccountOther && (
+          <FormField control={form.control} name="dematAccountOther" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-slate-700 font-medium text-sm">Enter Demat Account Name</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Your broker name"
+                  className="h-11 bg-white border-slate-200 focus:border-green-400"
+                  data-testid="input-demat-account-other"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        )}
+
+        {/* 6 — City */}
         <FormField control={form.control} name="city" render={({ field }) => (
           <FormItem>
             <FormLabel className="text-slate-700 font-medium text-sm">City</FormLabel>
@@ -118,6 +215,7 @@ function LeadFormFields({ form, onSubmit, submitLabel = "Request My Free Session
           </FormItem>
         )} />
 
+        {/* 7 & 8 — Experience Level + Best Time to Contact */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="experience" render={({ field }) => (
             <FormItem>
@@ -158,9 +256,13 @@ function LeadFormFields({ form, onSubmit, submitLabel = "Request My Free Session
           )} />
         </div>
 
+        {/* 9 — What do you want to understand? (OPTIONAL) */}
         <FormField control={form.control} name="intent" render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-slate-700 font-medium text-sm">What do you want to understand?</FormLabel>
+            <FormLabel className="text-slate-700 font-medium text-sm">
+              What do you want to understand?{" "}
+              <span className="text-slate-400 font-normal text-xs">(Optional)</span>
+            </FormLabel>
             <FormControl>
               <Textarea
                 placeholder="I want to learn about long-term investing, how to read charts, avoid beginner traps…"
@@ -173,6 +275,7 @@ function LeadFormFields({ form, onSubmit, submitLabel = "Request My Free Session
           </FormItem>
         )} />
 
+        {/* 10 — Consent */}
         <FormField control={form.control} name="consent" render={({ field }) => (
           <FormItem className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 p-4">
             <FormControl>
@@ -199,6 +302,7 @@ function LeadFormFields({ form, onSubmit, submitLabel = "Request My Free Session
           </div>
         )}
 
+        {/* 11 — Submit */}
         <Button
           type="submit"
           disabled={isSubmitting}
@@ -258,7 +362,7 @@ function LeadGate({ onUnlock }: { onUnlock: () => void }) {
   const [submitError, setSubmitError] = useState<string | undefined>();
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { fullName: "", mobile: "", city: "", experience: "", intent: "", contactTime: "", consent: false }
+    defaultValues: { fullName: "", mobile: "", investmentCapital: "", dematStatus: "", dematAccount: "", dematAccountOther: "", city: "", experience: "", contactTime: "", intent: "", consent: false }
   });
 
   /* Lock body scroll while gate is visible */
@@ -272,7 +376,11 @@ function LeadGate({ onUnlock }: { onUnlock: () => void }) {
     setSubmitting(true);
     setSubmitError(undefined);
     try {
-      await submitLead({ ...values, timestamp: new Date().toISOString() });
+      await submitLead({
+        ...values,
+        investmentCapital: values.investmentCapital ? Number(values.investmentCapital) : undefined,
+        timestamp: new Date().toISOString()
+      });
       sessionStorage.setItem(SESSION_KEY, "1");
       setSubmitted(true);
     } catch (err) {
@@ -345,7 +453,7 @@ function BookingModal({ onClose }: { onClose: () => void }) {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { fullName: "", mobile: "", city: "", experience: "", intent: "", contactTime: "", consent: false }
+    defaultValues: { fullName: "", mobile: "", investmentCapital: "", dematStatus: "", dematAccount: "", dematAccountOther: "", city: "", experience: "", contactTime: "", intent: "", consent: false }
   });
 
   /* ESC key closes */
@@ -366,7 +474,11 @@ function BookingModal({ onClose }: { onClose: () => void }) {
     setSubmitting(true);
     setSubmitError(undefined);
     try {
-      await submitLead({ ...values, timestamp: new Date().toISOString() });
+      await submitLead({
+        ...values,
+        investmentCapital: values.investmentCapital ? Number(values.investmentCapital) : undefined,
+        timestamp: new Date().toISOString()
+      });
       setSubmitted(true);
     } catch {
       setSubmitError("Something went wrong. Please try again.");
@@ -491,13 +603,17 @@ export default function Landing() {
   const [pageSubmitError, setPageSubmitError]     = useState<string | undefined>();
   const pageForm = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { fullName: "", mobile: "", city: "", experience: "", intent: "", contactTime: "", consent: false }
+    defaultValues: { fullName: "", mobile: "", investmentCapital: "", dematStatus: "", dematAccount: "", dematAccountOther: "", city: "", experience: "", contactTime: "", intent: "", consent: false }
   });
   async function handlePageSubmit(values: FormValues) {
     setPageSubmitting(true);
     setPageSubmitError(undefined);
     try {
-      await submitLead({ ...values, timestamp: new Date().toISOString() });
+      await submitLead({
+        ...values,
+        investmentCapital: values.investmentCapital ? Number(values.investmentCapital) : undefined,
+        timestamp: new Date().toISOString()
+      });
       sessionStorage.setItem(SESSION_KEY, "1");
       setPageFormSubmitted(true);
       setLeadSubmitted(true);
