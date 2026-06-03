@@ -78,7 +78,13 @@ function getSheet() {
       sheet.insertColumnsAfter(lastCol, TOTAL_COLS - lastCol);
       sheet.getRange(1, TOTAL_COLS).setValue("Status").setFontWeight("bold");
     }
-    // lastCol === TOTAL_COLS → already v4, nothing to do
+    // lastCol === TOTAL_COLS → already v4; check if D1 still has old header and rename it
+    if (lastCol >= TOTAL_COLS) {
+      var d1 = sheet.getRange(1, COL.INVESTMENT_CAPITAL).getValue();
+      if (d1 === "Investment Capital (₹)") {
+        sheet.getRange(1, COL.INVESTMENT_CAPITAL).setValue("Starting Capital (₹)");
+      }
+    }
   }
 
   return sheet;
