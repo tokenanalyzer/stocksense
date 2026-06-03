@@ -34,3 +34,8 @@ externalPort = 3002
 [[ports]]
 localPort = 19067
 externalPort = 3001
+
+[userenv]
+
+[userenv.shared]
+VITE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVJKyCax4NLQIEV0UP0l5aevHdzDCecoHLjkrRyGsAv-mQmxvL421KaEPbOFvihh86xw/exec"

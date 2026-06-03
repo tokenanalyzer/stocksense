@@ -1,0 +1,136 @@
+PROJECT: StockSense
+
+IMPORTANT:
+
+You have access to the imported repository.
+
+Your task is to complete the entire deployment process end-to-end.
+
+Current Google Apps Script Web App URL:
+
+https://script.google.com/macros/s/AKfycbxVJKyCax4NLQIEV0UP0l5aevHdzDCecoHLjkrRyGsAv-mQmxvL421KaEPbOFvihh86xw/exec
+
+---
+
+STEP 1 — VERIFY CURRENT CODE
+
+First inspect the repository and verify:
+
+- Lead form
+- Admin dashboard
+- Google Sheets integration
+- Starting Capital field
+- Demat fields
+- Auto-unlock flow after submission
+
+Do not assume.
+
+Verify actual implementation.
+
+---
+
+STEP 2 — UPDATE GOOGLE SHEETS ENDPOINT
+
+Ensure the frontend is using:
+
+https://script.google.com/macros/s/AKfycbxVJKyCax4NLQIEV0UP0l5aevHdzDCecoHLjkrRyGsAv-mQmxvL421KaEPbOFvihh86xw/exec
+
+for all lead submissions.
+
+Verify fields:
+
+fullName
+mobile
+investmentCapital
+dematStatus
+dematAccount
+dematAccountOther
+city
+experience
+contactTime
+intent
+consent
+
+---
+
+STEP 3 — BUILD TEST
+
+Run full build.
+
+Fix any errors found.
+
+Check:
+
+- TypeScript errors
+- Build errors
+- Runtime errors
+- Broken imports
+- Broken routes
+
+---
+
+STEP 4 — VERCEL DEPLOYMENT
+
+Attempt deployment to Vercel.
+
+If deployment access already exists:
+
+- Deploy latest build
+- Verify production deployment
+
+If deployment access does NOT exist:
+
+STOP and tell me EXACTLY what you need.
+
+Examples:
+
+- Vercel Token
+- Vercel Project ID
+- Vercel Team ID
+- GitHub Access
+- Environment Variables
+
+Do not guess.
+
+Tell me precisely what credential or token is required.
+
+---
+
+STEP 5 — PRODUCTION TESTING
+
+After deployment:
+
+Submit a test lead.
+
+Verify:
+
+- Lead reaches Google Sheets
+- Lead appears in Admin Dashboard
+- Starting Capital saves correctly
+- Demat fields save correctly
+- Website unlocks automatically after submission
+
+---
+
+STEP 6 — FINAL REPORT
+
+Provide:
+
+1. Files modified
+2. Git commits made
+3. Deployment status
+4. Production URL
+5. Test results
+6. Any credentials still required
+
+IMPORTANT:
+
+Do not stop after coding.
+
+Either:
+
+A) Successfully deploy to Vercel and verify production
+
+OR
+
+B) Tell me exactly which token/credential is required so I can provide it.
