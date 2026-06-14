@@ -111,8 +111,8 @@ export default function PrivacyPolicy() {
             </ul>
             <p className="mt-3">
               To exercise any of these rights, contact us at{" "}
-              <a href="mailto:stocksense00@gmail.com" className="text-green-400 hover:underline">
-                stocksense00@gmail.com
+              <a href="mailto:info@thestocksense.in" className="text-green-400 hover:underline">
+                info@thestocksense.in
               </a>
               .
             </p>
@@ -141,8 +141,8 @@ export default function PrivacyPolicy() {
             <p>If you have any questions about this Privacy Policy, please contact us:</p>
             <div className="mt-3 bg-slate-800/60 rounded-xl p-5 border border-slate-700 space-y-2 text-sm">
               <p><span className="text-slate-400">Email:</span>{" "}
-                <a href="mailto:stocksense00@gmail.com" className="text-green-400 hover:underline">
-                  stocksense00@gmail.com
+                <a href="mailto:info@thestocksense.in" className="text-green-400 hover:underline">
+                  info@thestocksense.in
                 </a>
               </p>
               <p><span className="text-slate-400">WhatsApp:</span>{" "}
