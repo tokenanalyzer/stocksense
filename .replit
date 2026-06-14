@@ -34,4 +34,4 @@ externalPort = 80
 [userenv]
 
 [userenv.shared]
-VITE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxHSpwvdOFAiR_Sog46vEtR67zoP9qX31lpXgvnaRaEODW2ZeQqF5JWQMwbyBHIjDM/exec"
+VITE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVJKyCax4NLQIEV0UP0l5aevHdzDCecoHLjkrRyGsAv-mQmxvL421KaEPbOFvihh86xw/exec"
