@@ -312,7 +312,10 @@ function LeadFormFields({ form, onSubmit, submitLabel = "Request My Free Session
             </FormControl>
             <div className="leading-tight">
               <FormLabel className="text-sm font-normal text-slate-600 cursor-pointer">
-                I agree to be contacted by call, SMS, or WhatsApp regarding my enquiry.
+                I agree to be contacted by call, SMS, or WhatsApp regarding my enquiry. I have read and accept the{" "}
+                <a href="/privacy-policy" target="_blank" className="text-green-600 underline hover:text-green-700">
+                  Privacy Policy
+                </a>.
               </FormLabel>
               <FormMessage />
             </div>
@@ -1182,7 +1185,7 @@ export default function Landing() {
             <div className="flex flex-col md:flex-row items-center justify-between text-sm text-slate-500 gap-4">
               <p>© {new Date().getFullYear()} StockSense Education. All rights reserved.</p>
               <div className="flex gap-5">
-                <a href="#" className="hover:text-slate-300 transition-colors">Privacy Policy</a>
+                <a href="/privacy-policy" className="hover:text-slate-300 transition-colors">Privacy Policy</a>
                 <a href="#" className="hover:text-slate-300 transition-colors">Terms of Service</a>
               </div>
             </div>
