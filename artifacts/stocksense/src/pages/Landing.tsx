@@ -1186,7 +1186,7 @@ export default function Landing() {
               <p>© {new Date().getFullYear()} StockSense Education. All rights reserved.</p>
               <div className="flex gap-5">
                 <a href="/privacy-policy" className="hover:text-slate-300 transition-colors">Privacy Policy</a>
-                <a href="#" className="hover:text-slate-300 transition-colors">Terms of Service</a>
+                <a href="/terms-of-service" className="hover:text-slate-300 transition-colors">Terms of Service</a>
               </div>
             </div>
           </div>
