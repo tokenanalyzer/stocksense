@@ -60,8 +60,8 @@ const DEMAT_ACCOUNTS = [
 ] as const;
 
 const formSchema = z.object({
-  fullName:          z.string().min(2, "Full name must be at least 2 characters."),
-  mobile:            z.string().min(10, "Enter a valid mobile number."),
+  fullName:          z.string().min(2, "Full name must be at least 2 characters.").regex(/^[a-zA-Z\s]+$/, "Name should only contain letters."),
+  mobile:            z.string().min(10, "Enter a valid mobile number.").regex(/^\+?[0-9]{10,13}$/, "Enter a valid 10-digit mobile number."),
   investmentCapital: z.string().min(1, "Please enter your starting capital.").regex(/^\d+$/, "Enter a valid amount (digits only)."),
   dematStatus:       z.string().min(1, "Please select your Demat account status."),
   dematAccount:      z.string().optional(),
@@ -109,7 +109,18 @@ function LeadFormFields({ form, onSubmit, submitLabel = "Request My Free Session
             <FormItem>
               <FormLabel className="text-slate-700 font-medium text-sm">Full Name</FormLabel>
               <FormControl>
-                <Input placeholder="Rahul Sharma" className="h-11 bg-white border-slate-200 focus:border-green-400" data-testid="input-fullname" {...field} />
+                <Input
+                  placeholder="Rahul Sharma"
+                  className="h-11 bg-white border-slate-200 focus:border-green-400"
+                  data-testid="input-fullname"
+                  {...field}
+                  onKeyDown={(e) => {
+                    if (/[0-9]/.test(e.key) && !["Backspace","Delete","ArrowLeft","ArrowRight","Tab"].includes(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
+                  onChange={(e) => field.onChange(e.target.value.replace(/[0-9]/g, ""))}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -118,7 +129,20 @@ function LeadFormFields({ form, onSubmit, submitLabel = "Request My Free Session
             <FormItem>
               <FormLabel className="text-slate-700 font-medium text-sm">Mobile Number</FormLabel>
               <FormControl>
-                <Input placeholder="+91 98765 43210" inputMode="tel" className="h-11 bg-white border-slate-200 focus:border-green-400" data-testid="input-mobile" {...field} />
+                <Input
+                  placeholder="+91 98765 43210"
+                  inputMode="tel"
+                  className="h-11 bg-white border-slate-200 focus:border-green-400"
+                  data-testid="input-mobile"
+                  {...field}
+                  onKeyDown={(e) => {
+                    const allowed = ["Backspace","Delete","ArrowLeft","ArrowRight","Tab","+"];
+                    if (!/[0-9]/.test(e.key) && !allowed.includes(e.key)) {
+                      e.preventDefault();
+                    }
+                  }}
+                  onChange={(e) => field.onChange(e.target.value.replace(/[^0-9+]/g, ""))}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
