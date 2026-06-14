@@ -1,0 +1,991 @@
+[
+  {
+    "type": "staticAssets",
+    "artefacts": [
+      {
+        "path": "/.npmrc",
+        "type": "Misc",
+        "size": 56
+      },
+      {
+        "path": "/.replit",
+        "type": "Misc",
+        "size": 683
+      },
+      {
+        "path": "/.replitignore",
+        "type": "Misc",
+        "size": 201
+      },
+      {
+        "path": "/artifacts/api-server/.replit-artifact/artifact.toml",
+        "type": "Misc",
+        "size": 784
+      },
+      {
+        "path": "/artifacts/api-server/build.mjs",
+        "type": "JS",
+        "size": 3455
+      },
+      {
+        "path": "/artifacts/api-server/package.json",
+        "type": "Misc",
+        "size": 880
+      },
+      {
+        "path": "/artifacts/api-server/src/app.ts",
+        "type": "Media",
+        "size": 676
+      },
+      {
+        "path": "/artifacts/api-server/src/index.ts",
+        "type": "Media",
+        "size": 511
+      },
+      {
+        "path": "/artifacts/api-server/src/lib/.gitkeep",
+        "type": "Misc",
+        "size": 0
+      },
+      {
+        "path": "/artifacts/api-server/src/lib/logger.ts",
+        "type": "Media",
+        "size": 421
+      },
+      {
+        "path": "/artifacts/api-server/src/middlewares/.gitkeep",
+        "type": "Misc",
+        "size": 0
+      },
+      {
+        "path": "/artifacts/api-server/src/routes/health.ts",
+        "type": "Media",
+        "size": 165
+      },
+      {
+        "path": "/artifacts/api-server/src/routes/index.ts",
+        "type": "Media",
+        "size": 171
+      },
+      {
+        "path": "/artifacts/api-server/tsconfig.json",
+        "type": "Misc",
+        "size": 335
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/.replit-artifact/artifact.toml",
+        "type": "Misc",
+        "size": 327
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/components.json",
+        "type": "Misc",
+        "size": 426
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/index.html",
+        "type": "HTML",
+        "size": 4325
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/mockupPreviewPlugin.ts",
+        "type": "Media",
+        "size": 4639
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/package.json",
+        "type": "Misc",
+        "size": 2512
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/.generated/mockup-components.ts",
+        "type": "Media",
+        "size": 171
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/App.tsx",
+        "type": "Misc",
+        "size": 3654
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/accordion.tsx",
+        "type": "Misc",
+        "size": 2001
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/alert-dialog.tsx",
+        "type": "Misc",
+        "size": 4419
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/alert.tsx",
+        "type": "Misc",
+        "size": 1598
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/aspect-ratio.tsx",
+        "type": "Misc",
+        "size": 140
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/avatar.tsx",
+        "type": "Misc",
+        "size": 1419
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/badge.tsx",
+        "type": "Misc",
+        "size": 1163
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/breadcrumb.tsx",
+        "type": "Misc",
+        "size": 2712
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/button-group.tsx",
+        "type": "Misc",
+        "size": 2209
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/button.tsx",
+        "type": "Misc",
+        "size": 1925
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/calendar.tsx",
+        "type": "Misc",
+        "size": 7569
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/card.tsx",
+        "type": "Misc",
+        "size": 1828
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/carousel.tsx",
+        "type": "Misc",
+        "size": 6210
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/chart.tsx",
+        "type": "Misc",
+        "size": 10674
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/checkbox.tsx",
+        "type": "Misc",
+        "size": 1031
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/collapsible.tsx",
+        "type": "Misc",
+        "size": 329
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/command.tsx",
+        "type": "Misc",
+        "size": 4887
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/context-menu.tsx",
+        "type": "Misc",
+        "size": 7406
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/dialog.tsx",
+        "type": "Misc",
+        "size": 3835
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/drawer.tsx",
+        "type": "Misc",
+        "size": 3007
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/dropdown-menu.tsx",
+        "type": "Misc",
+        "size": 7606
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/empty.tsx",
+        "type": "Misc",
+        "size": 2396
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/field.tsx",
+        "type": "Misc",
+        "size": 6044
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/form.tsx",
+        "type": "Misc",
+        "size": 4175
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/hover-card.tsx",
+        "type": "Misc",
+        "size": 1237
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/input-group.tsx",
+        "type": "Misc",
+        "size": 4883
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/input-otp.tsx",
+        "type": "Misc",
+        "size": 2143
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/input.tsx",
+        "type": "Misc",
+        "size": 768
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/item.tsx",
+        "type": "Misc",
+        "size": 4494
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/kbd.tsx",
+        "type": "Misc",
+        "size": 862
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/label.tsx",
+        "type": "Misc",
+        "size": 724
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/menubar.tsx",
+        "type": "Misc",
+        "size": 8608
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/navigation-menu.tsx",
+        "type": "Misc",
+        "size": 5124
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/pagination.tsx",
+        "type": "Misc",
+        "size": 2751
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/popover.tsx",
+        "type": "Misc",
+        "size": 1342
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/progress.tsx",
+        "type": "Misc",
+        "size": 792
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/radio-group.tsx",
+        "type": "Misc",
+        "size": 1410
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/resizable.tsx",
+        "type": "Misc",
+        "size": 1723
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/scroll-area.tsx",
+        "type": "Misc",
+        "size": 1642
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/select.tsx",
+        "type": "Misc",
+        "size": 5745
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/separator.tsx",
+        "type": "Misc",
+        "size": 756
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/sheet.tsx",
+        "type": "Misc",
+        "size": 4280
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/sidebar.tsx",
+        "type": "Misc",
+        "size": 21056
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/skeleton.tsx",
+        "type": "Misc",
+        "size": 266
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/slider.tsx",
+        "type": "Misc",
+        "size": 1037
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/sonner.tsx",
+        "type": "Misc",
+        "size": 894
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/spinner.tsx",
+        "type": "Misc",
+        "size": 331
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/switch.tsx",
+        "type": "Misc",
+        "size": 1148
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/table.tsx",
+        "type": "Misc",
+        "size": 2859
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/tabs.tsx",
+        "type": "Misc",
+        "size": 1877
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/textarea.tsx",
+        "type": "Misc",
+        "size": 649
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/toast.tsx",
+        "type": "Misc",
+        "size": 4845
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/toaster.tsx",
+        "type": "Misc",
+        "size": 772
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/toggle-group.tsx",
+        "type": "Misc",
+        "size": 1753
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/toggle.tsx",
+        "type": "Misc",
+        "size": 1486
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/components/ui/tooltip.tsx",
+        "type": "Misc",
+        "size": 1267
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/hooks/use-mobile.tsx",
+        "type": "Misc",
+        "size": 565
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/hooks/use-toast.ts",
+        "type": "Media",
+        "size": 3767
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/index.css",
+        "type": "CSS",
+        "size": 4967
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/lib/utils.ts",
+        "type": "Media",
+        "size": 166
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/src/main.tsx",
+        "type": "Misc",
+        "size": 157
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/tsconfig.json",
+        "type": "Misc",
+        "size": 513
+      },
+      {
+        "path": "/artifacts/mockup-sandbox/vite.config.ts",
+        "type": "Media",
+        "size": 1592
+      },
+      {
+        "path": "/artifacts/stocksense/.env.example",
+        "type": "Misc",
+        "size": 286
+      },
+      {
+        "path": "/artifacts/stocksense/.replit-artifact/artifact.toml",
+        "type": "Misc",
+        "size": 595
+      },
+      {
+        "path": "/artifacts/stocksense/components.json",
+        "type": "Misc",
+        "size": 434
+      },
+      {
+        "path": "/artifacts/stocksense/google-apps-script/Code.gs",
+        "type": "Misc",
+        "size": 12640
+      },
+      {
+        "path": "/artifacts/stocksense/index.html",
+        "type": "HTML",
+        "size": 2037
+      },
+      {
+        "path": "/artifacts/stocksense/package.json",
+        "type": "Misc",
+        "size": 2734
+      },
+      {
+        "path": "/artifacts/stocksense/public/favicon.svg",
+        "type": "Image",
+        "size": 163
+      },
+      {
+        "path": "/artifacts/stocksense/public/opengraph.jpg",
+        "type": "Image",
+        "size": 55645
+      },
+      {
+        "path": "/artifacts/stocksense/public/robots.txt",
+        "type": "Misc",
+        "size": 23
+      },
+      {
+        "path": "/artifacts/stocksense/public/stocksense-logo.png",
+        "type": "Image",
+        "size": 1168918
+      },
+      {
+        "path": "/artifacts/stocksense/src/App.tsx",
+        "type": "Misc",
+        "size": 933
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/accordion.tsx",
+        "type": "Misc",
+        "size": 2001
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/alert-dialog.tsx",
+        "type": "Misc",
+        "size": 4419
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/alert.tsx",
+        "type": "Misc",
+        "size": 1598
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/aspect-ratio.tsx",
+        "type": "Misc",
+        "size": 140
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/avatar.tsx",
+        "type": "Misc",
+        "size": 1419
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/badge.tsx",
+        "type": "Misc",
+        "size": 1522
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/breadcrumb.tsx",
+        "type": "Misc",
+        "size": 2712
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/button-group.tsx",
+        "type": "Misc",
+        "size": 2209
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/button.tsx",
+        "type": "Misc",
+        "size": 2356
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/calendar.tsx",
+        "type": "Misc",
+        "size": 7569
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/card.tsx",
+        "type": "Misc",
+        "size": 1828
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/carousel.tsx",
+        "type": "Misc",
+        "size": 6210
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/chart.tsx",
+        "type": "Misc",
+        "size": 10763
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/checkbox.tsx",
+        "type": "Misc",
+        "size": 1031
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/collapsible.tsx",
+        "type": "Misc",
+        "size": 329
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/command.tsx",
+        "type": "Misc",
+        "size": 4887
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/context-menu.tsx",
+        "type": "Misc",
+        "size": 7406
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/dialog.tsx",
+        "type": "Misc",
+        "size": 3835
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/drawer.tsx",
+        "type": "Misc",
+        "size": 3007
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/dropdown-menu.tsx",
+        "type": "Misc",
+        "size": 7606
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/empty.tsx",
+        "type": "Misc",
+        "size": 2396
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/field.tsx",
+        "type": "Misc",
+        "size": 6044
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/form.tsx",
+        "type": "Misc",
+        "size": 4175
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/hover-card.tsx",
+        "type": "Misc",
+        "size": 1237
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/input-group.tsx",
+        "type": "Misc",
+        "size": 4971
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/input-otp.tsx",
+        "type": "Misc",
+        "size": 2143
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/input.tsx",
+        "type": "Misc",
+        "size": 768
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/item.tsx",
+        "type": "Misc",
+        "size": 4494
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/kbd.tsx",
+        "type": "Misc",
+        "size": 862
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/label.tsx",
+        "type": "Misc",
+        "size": 724
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/menubar.tsx",
+        "type": "Misc",
+        "size": 8608
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/navigation-menu.tsx",
+        "type": "Misc",
+        "size": 5124
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/pagination.tsx",
+        "type": "Misc",
+        "size": 2751
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/popover.tsx",
+        "type": "Misc",
+        "size": 1342
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/progress.tsx",
+        "type": "Misc",
+        "size": 792
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/radio-group.tsx",
+        "type": "Misc",
+        "size": 1410
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/resizable.tsx",
+        "type": "Misc",
+        "size": 1723
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/scroll-area.tsx",
+        "type": "Misc",
+        "size": 1642
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/select.tsx",
+        "type": "Misc",
+        "size": 5745
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/separator.tsx",
+        "type": "Misc",
+        "size": 756
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/sheet.tsx",
+        "type": "Misc",
+        "size": 4280
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/sidebar.tsx",
+        "type": "Misc",
+        "size": 21846
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/skeleton.tsx",
+        "type": "Misc",
+        "size": 266
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/slider.tsx",
+        "type": "Misc",
+        "size": 1037
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/sonner.tsx",
+        "type": "Misc",
+        "size": 894
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/spinner.tsx",
+        "type": "Misc",
+        "size": 331
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/switch.tsx",
+        "type": "Misc",
+        "size": 1148
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/table.tsx",
+        "type": "Misc",
+        "size": 2859
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/tabs.tsx",
+        "type": "Misc",
+        "size": 1877
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/textarea.tsx",
+        "type": "Misc",
+        "size": 649
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/toast.tsx",
+        "type": "Misc",
+        "size": 4845
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/toaster.tsx",
+        "type": "Misc",
+        "size": 772
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/toggle-group.tsx",
+        "type": "Misc",
+        "size": 1753
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/toggle.tsx",
+        "type": "Misc",
+        "size": 1486
+      },
+      {
+        "path": "/artifacts/stocksense/src/components/ui/tooltip.tsx",
+        "type": "Misc",
+        "size": 1267
+      },
+      {
+        "path": "/artifacts/stocksense/src/hooks/use-mobile.tsx",
+        "type": "Misc",
+        "size": 565
+      },
+      {
+        "path": "/artifacts/stocksense/src/hooks/use-toast.ts",
+        "type": "Media",
+        "size": 3895
+      },
+      {
+        "path": "/artifacts/stocksense/src/index.css",
+        "type": "CSS",
+        "size": 12198
+      },
+      {
+        "path": "/artifacts/stocksense/src/lib/utils.ts",
+        "type": "Media",
+        "size": 166
+      },
+      {
+        "path": "/artifacts/stocksense/src/main.tsx",
+        "type": "Misc",
+        "size": 157
+      },
+      {
+        "path": "/artifacts/stocksense/src/pages/Admin.tsx",
+        "type": "Misc",
+        "size": 59699
+      },
+      {
+        "path": "/artifacts/stocksense/src/pages/Landing.tsx",
+        "type": "Misc",
+        "size": 61207
+      },
+      {
+        "path": "/artifacts/stocksense/src/pages/not-found.tsx",
+        "type": "Misc",
+        "size": 711
+      },
+      {
+        "path": "/artifacts/stocksense/tsconfig.json",
+        "type": "Misc",
+        "size": 584
+      },
+      {
+        "path": "/artifacts/stocksense/vercel.json",
+        "type": "Misc",
+        "size": 319
+      },
+      {
+        "path": "/artifacts/stocksense/vite.config.ts",
+        "type": "Media",
+        "size": 1496
+      },
+      {
+        "path": "/attached_assets/file_000000001d8871fa822307813ae000a5_1780324458986.png",
+        "type": "Image",
+        "size": 1168918
+      },
+      {
+        "path": "/attached_assets/Pasted-PROJECT-StockSense-IMPORTANT-You-have-access-to-the-imp_1780478976602.txt",
+        "type": "Misc",
+        "size": 2110
+      },
+      {
+        "path": "/attached_assets/Pasted-Redesign-this-project-completely-as-a-lead-first-landin_1780325041648.txt",
+        "type": "Misc",
+        "size": 2938
+      },
+      {
+        "path": "/attached_assets/Pasted-You-are-a-senior-product-designer-premium-landing-page-_1780324461671.txt",
+        "type": "Misc",
+        "size": 9259
+      },
+      {
+        "path": "/attached_assets/Screenshot_2026-06-02-19-42-43-40_40deb401b9ffe8e1df2f1cc5ba48_1780409588474.jpg",
+        "type": "Image",
+        "size": 448064
+      },
+      {
+        "path": "/attached_assets/Screenshot_2026-06-02-19-59-58-57_40deb401b9ffe8e1df2f1cc5ba48_1780410679448.jpg",
+        "type": "Image",
+        "size": 616131
+      },
+      {
+        "path": "/attached_assets/Screenshot_2026-06-02-20-00-27-35_40deb401b9ffe8e1df2f1cc5ba48_1780410679420.jpg",
+        "type": "Image",
+        "size": 442242
+      },
+      {
+        "path": "/attached_assets/Screenshot_2026-06-02-20-48-49-55_40deb401b9ffe8e1df2f1cc5ba48_1780413547118.jpg",
+        "type": "Image",
+        "size": 669928
+      },
+      {
+        "path": "/lib/api-client-react/package.json",
+        "type": "Misc",
+        "size": 265
+      },
+      {
+        "path": "/lib/api-client-react/src/custom-fetch.ts",
+        "type": "Media",
+        "size": 11377
+      },
+      {
+        "path": "/lib/api-client-react/src/generated/api.schemas.ts",
+        "type": "Media",
+        "size": 178
+      },
+      {
+        "path": "/lib/api-client-react/src/generated/api.ts",
+        "type": "Media",
+        "size": 2544
+      },
+      {
+        "path": "/lib/api-client-react/src/index.ts",
+        "type": "Media",
+        "size": 194
+      },
+      {
+        "path": "/lib/api-client-react/tsconfig.json",
+        "type": "Misc",
+        "size": 251
+      },
+      {
+        "path": "/lib/api-spec/openapi.yaml",
+        "type": "Misc",
+        "size": 778
+      },
+      {
+        "path": "/lib/api-spec/orval.config.ts",
+        "type": "Media",
+        "size": 1803
+      },
+      {
+        "path": "/lib/api-spec/package.json",
+        "type": "Misc",
+        "size": 227
+      },
+      {
+        "path": "/lib/api-zod/package.json",
+        "type": "Misc",
+        "size": 189
+      },
+      {
+        "path": "/lib/api-zod/src/generated/api.ts",
+        "type": "Media",
+        "size": 296
+      },
+      {
+        "path": "/lib/api-zod/src/generated/types/healthStatus.ts",
+        "type": "Media",
+        "size": 179
+      },
+      {
+        "path": "/lib/api-zod/src/generated/types/index.ts",
+        "type": "Media",
+        "size": 159
+      },
+      {
+        "path": "/lib/api-zod/src/index.ts",
+        "type": "Media",
+        "size": 68
+      },
+      {
+        "path": "/lib/api-zod/tsconfig.json",
+        "type": "Misc",
+        "size": 221
+      },
+      {
+        "path": "/lib/db/drizzle.config.ts",
+        "type": "Media",
+        "size": 352
+      },
+      {
+        "path": "/lib/db/package.json",
+        "type": "Misc",
+        "size": 578
+      },
+      {
+        "path": "/lib/db/src/index.ts",
+        "type": "Media",
+        "size": 416
+      },
+      {
+        "path": "/lib/db/src/schema/index.ts",
+        "type": "Media",
+        "size": 743
+      },
+      {
+        "path": "/lib/db/tsconfig.json",
+        "type": "Misc",
+        "size": 244
+      },
+      {
+        "path": "/pnpm-workspace.yaml",
+        "type": "Misc",
+        "size": 6577
+      },
+      {
+        "path": "/replit.md",
+        "type": "Misc",
+        "size": 1521
+      },
+      {
+        "path": "/scripts/package.json",
+        "type": "Misc",
+        "size": 281
+      },
+      {
+        "path": "/scripts/post-merge.sh",
+        "type": "Misc",
+        "size": 72
+      },
+      {
+        "path": "/scripts/src/hello.ts",
+        "type": "Media",
+        "size": 46
+      },
+      {
+        "path": "/scripts/tsconfig.json",
+        "type": "Misc",
+        "size": 157
+      },
+      {
+        "path": "/tsconfig.base.json",
+        "type": "Misc",
+        "size": 692
+      },
+      {
+        "path": "/tsconfig.json",
+        "type": "Misc",
+        "size": 236
+      }
+    ]
+  },
+  {
+    "type": "cronJobs",
+    "artefacts": []
+  }
+]
