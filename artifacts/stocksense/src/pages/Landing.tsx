@@ -9,6 +9,10 @@ import {
   ChevronRight, Lightbulb, Users, Clock, Loader2, AlertCircle, X, Menu
 } from "lucide-react";
 import stockSenseLogo from "@assets/file_000000001d8871fa822307813ae000a5_1780324458986.png";
+import imgMentorship from "@assets/1780465735125_1782966224243.png";
+import imgEduFirst from "@assets/1780464227209_1782966224414.png";
+import imgCurriculum from "@assets/1780464294990_1782966224389.png";
+import imgMentorLaptop from "@assets/1780464911662_1782966224341.png";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -647,6 +651,22 @@ export default function Landing() {
                     <span key={i} className="flex items-center gap-1.5 font-medium">{item.icon} {item.text}</span>
                   ))}
                 </motion.div>
+
+                {/* Hero featured image */}
+                <motion.div variants={fadeUp} className="mt-14 relative rounded-2xl overflow-hidden shadow-2xl mx-auto max-w-2xl">
+                  <img
+                    src={imgMentorship}
+                    alt="One-on-one stock market mentorship session at StockSense"
+                    className="w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-transparent to-transparent" />
+                  <div className="absolute bottom-5 left-5 right-5">
+                    <span className="inline-flex items-center gap-2 bg-white/95 backdrop-blur text-slate-900 rounded-full px-4 py-2 text-sm font-semibold shadow">
+                      <BookOpen className="h-3.5 w-3.5 text-green-600" />
+                      Personal mentorship · Education only · Not investment advice
+                    </span>
+                  </div>
+                </motion.div>
               </motion.div>
             </div>
           </section>
@@ -702,6 +722,34 @@ export default function Landing() {
                     <p className="text-slate-500 text-sm leading-relaxed">{item.desc}</p>
                   </motion.div>
                 ))}
+              </FadeSection>
+
+              {/* Benefits visual showcase */}
+              <FadeSection className="mt-14 grid md:grid-cols-2 gap-6">
+                <motion.div variants={fadeUp} className="relative rounded-2xl overflow-hidden shadow-lg aspect-[4/3]">
+                  <img
+                    src={imgEduFirst}
+                    alt="Education before investment — StockSense classroom session"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/65 via-transparent to-transparent" />
+                  <div className="absolute bottom-5 left-5">
+                    <span className="text-white font-bold text-lg leading-tight block">Education First.</span>
+                    <span className="text-green-300 text-sm">Learn before you act.</span>
+                  </div>
+                </motion.div>
+                <motion.div variants={fadeUp} className="relative rounded-2xl overflow-hidden shadow-lg aspect-[4/3]">
+                  <img
+                    src={imgCurriculum}
+                    alt="Understanding how markets work — StockSense structured curriculum"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/65 via-transparent to-transparent" />
+                  <div className="absolute bottom-5 left-5">
+                    <span className="text-white font-bold text-lg leading-tight block">Structured Curriculum.</span>
+                    <span className="text-green-300 text-sm">Markets explained clearly.</span>
+                  </div>
+                </motion.div>
               </FadeSection>
             </div>
           </section>
@@ -760,7 +808,8 @@ export default function Landing() {
                   viewport={{ once: true }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
                 >
                   <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 shadow-2xl aspect-[4/5] flex flex-col justify-between p-10">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(74,222,128,0.08),transparent_60%)]" />
+                    <img src={imgMentorLaptop} alt="StockSense mentor guiding a student through market education" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/95 via-slate-900/60 to-slate-900/40" />
                     <div className="relative z-10">
                       <img src={stockSenseLogo} alt="StockSense" className="h-10 w-auto mb-8 opacity-90" />
                     </div>
@@ -837,6 +886,24 @@ export default function Landing() {
                   </motion.div>
                 ))}
               </FadeSection>
+
+              {/* How It Works visual */}
+              <motion.div
+                initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                className="mt-14 relative rounded-2xl overflow-hidden shadow-xl"
+              >
+                <img
+                  src={imgCurriculum}
+                  alt="StockSense structured curriculum — understanding how markets really work"
+                  className="w-full object-cover max-h-80"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 via-slate-900/40 to-transparent" />
+                <div className="absolute inset-0 flex flex-col justify-center px-10">
+                  <p className="text-green-400 text-sm font-semibold uppercase tracking-widest mb-2">Educational Platform · Not Investment Advice</p>
+                  <h3 className="text-white text-2xl md:text-3xl font-bold max-w-sm leading-snug">Understand how markets really work.</h3>
+                </div>
+              </motion.div>
             </div>
           </section>
 
