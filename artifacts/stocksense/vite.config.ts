@@ -4,22 +4,10 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-// On Vercel, PORT and BASE_PATH are not provided — use safe defaults for build.
-const isVercel = !!process.env.VERCEL;
-
-const rawPort = process.env.PORT;
-if (!rawPort && !isVercel) {
-  throw new Error("PORT environment variable is required but was not provided.");
-}
-const port = Number(rawPort ?? "3000");
-if (Number.isNaN(port) || port <= 0) {
-  throw new Error(`Invalid PORT value: "${rawPort}"`);
-}
-
+// PORT and BASE_PATH are provided by Replit workflows.
+// On Vercel (static build), they are absent — use safe defaults.
+const port = Number(process.env.PORT ?? "3000");
 const basePath = process.env.BASE_PATH ?? "/";
-if (!process.env.BASE_PATH && !isVercel) {
-  throw new Error("BASE_PATH environment variable is required but was not provided.");
-}
 
 export default defineConfig({
   base: basePath,
