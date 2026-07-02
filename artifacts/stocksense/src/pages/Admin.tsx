@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import {
   Search, Download, Phone, MessageCircle, LogOut, RefreshCw,
   TrendingUp, Users, Calendar, CheckCircle2, Loader2, AlertCircle,
-  ChevronDown, ArrowLeft, BarChart3, Plus, X
+  ChevronDown, ArrowLeft, BarChart3, Plus, X, StickyNote
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -469,6 +469,38 @@ function StatCard({ title, value, icon, sub }: { title: string; value: number | 
   );
 }
 
+/* ─── Notes (localStorage per lead) ─────────────────────────────────────────── */
+const NOTE_KEY = (rowIndex: number) => `ss_note_${rowIndex}`;
+
+function NotesInput({ rowIndex }: { rowIndex: number }) {
+  const [note, setNote] = useState(() => localStorage.getItem(NOTE_KEY(rowIndex)) ?? "");
+  const [saved, setSaved] = useState(false);
+
+  function save() {
+    localStorage.setItem(NOTE_KEY(rowIndex), note);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1500);
+  }
+
+  return (
+    <div className="mt-2 space-y-1">
+      <div className="flex items-center gap-1 text-slate-500 text-xs">
+        <StickyNote className="h-3 w-3" />
+        <span>Notes</span>
+        {saved && <span className="text-green-400 ml-1">Saved ✓</span>}
+      </div>
+      <Textarea
+        value={note}
+        onChange={e => setNote(e.target.value)}
+        onBlur={save}
+        placeholder="Call notes, follow-up reminders…"
+        rows={2}
+        className="text-xs resize-none bg-slate-800 border-slate-700 text-slate-300 placeholder:text-slate-600 focus:border-green-600 min-h-0 py-1.5 px-2"
+      />
+    </div>
+  );
+}
+
 /* ─── Lead Table Row (desktop) ──────────────────────────────────────────────── */
 function LeadTableRow({ lead, token, onStatusChange }: { lead: Lead; token: string; onStatusChange: (idx: number, s: LeadStatus) => void }) {
   const [updating, setUpdating] = useState(false);
@@ -494,6 +526,9 @@ function LeadTableRow({ lead, token, onStatusChange }: { lead: Lead; token: stri
       <TableCell className="py-3 hidden lg:table-cell text-slate-400 text-xs">{lead.contactTime}</TableCell>
       <TableCell className="py-3 hidden xl:table-cell max-w-[200px]">
         <p className="text-slate-400 text-xs truncate" title={lead.intent}>{lead.intent}</p>
+      </TableCell>
+      <TableCell className="py-3 hidden xl:table-cell max-w-[200px]">
+        <NotesInput rowIndex={lead.rowIndex} />
       </TableCell>
       <TableCell className="py-3 text-xs text-slate-500 hidden lg:table-cell whitespace-nowrap">{lead.timestamp}</TableCell>
       <TableCell className="py-3">
@@ -559,6 +594,7 @@ function LeadCard({ lead, token, onStatusChange }: { lead: Lead; token: string; 
       </div>
       {lead.intent && <p className="text-slate-400 text-xs leading-relaxed line-clamp-2">{lead.intent}</p>}
       <p className="text-slate-600 text-xs">{lead.timestamp}</p>
+      <NotesInput rowIndex={lead.rowIndex} />
       <div className="flex items-center justify-between pt-1">
         <Select value={lead.status} onValueChange={handleStatus} disabled={updating}>
           <SelectTrigger className="h-8 w-[140px] text-xs bg-slate-800 border-slate-700 text-slate-300">
@@ -642,12 +678,15 @@ export default function Admin() {
     setLeads(prev => prev.map(l => l.rowIndex === rowIndex ? { ...l, status } : l));
   }
 
-  const filtered = useMemo(() => leads.filter(l => {
-    const nameMatch   = l.fullName.toLowerCase().includes(searchName.toLowerCase());
-    const mobileMatch = l.mobile.includes(searchMobile.replace(/\s/g,""));
-    const statusMatch = statusFilter === "all" || l.status === statusFilter;
-    return nameMatch && mobileMatch && statusMatch;
-  }), [leads, searchName, searchMobile, statusFilter]);
+  const filtered = useMemo(() => leads
+    .filter(l => {
+      const nameMatch   = l.fullName.toLowerCase().includes(searchName.toLowerCase());
+      const mobileMatch = l.mobile.includes(searchMobile.replace(/\s/g,""));
+      const statusMatch = statusFilter === "all" || l.status === statusFilter;
+      return nameMatch && mobileMatch && statusMatch;
+    })
+    .sort((a, b) => b.rowIndex - a.rowIndex),   // newest first
+  [leads, searchName, searchMobile, statusFilter]);
 
   const stats = useMemo(() => computeStats(leads), [leads]);
 
@@ -828,6 +867,7 @@ export default function Admin() {
                     <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3 hidden md:table-cell">Experience</TableHead>
                     <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3 hidden lg:table-cell">Best Time</TableHead>
                     <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3 hidden xl:table-cell">Intent</TableHead>
+                    <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3 hidden xl:table-cell">Notes</TableHead>
                     <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3 hidden lg:table-cell">Timestamp</TableHead>
                     <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3">Status</TableHead>
                     <TableHead className="text-slate-400 font-semibold text-xs uppercase tracking-wider py-3">Actions</TableHead>
