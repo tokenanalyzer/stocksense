@@ -657,7 +657,7 @@ export default function Landing() {
               <FadeSection className="text-center max-w-2xl mx-auto mb-16">
                 <motion.p variants={fadeUp} className="text-green-600 text-sm font-semibold uppercase tracking-widest mb-3">Why Education First</motion.p>
                 <motion.h2 variants={fadeUp} className="text-4xl md:text-5xl font-bold text-slate-900 mb-4 leading-tight">
-                  A strong foundation is the best investment.
+                  A strong foundation is the best decision you can make.
                 </motion.h2>
                 <motion.p variants={fadeUp} className="text-slate-500 text-lg leading-relaxed">
                   Before you risk capital, build the mental framework that separates disciplined investors from reactive gamblers.
@@ -1033,8 +1033,8 @@ export default function Landing() {
             <Separator className="bg-slate-800 mb-8" />
 
             <div className="bg-slate-800/50 rounded-xl p-6 mb-8 text-xs text-slate-400 leading-relaxed border border-slate-800">
-              <strong className="text-slate-300 block mb-2">Important Disclaimer</strong>
-              StockSense is an educational and investor awareness initiative only. We are not registered investment advisors. All content, resources, and discussions are strictly for educational purposes and should not be interpreted as financial, investment, or trading advice. We do not provide stock tips, portfolio management, or buy/sell recommendations. All investments are subject to market risk. Users are entirely responsible for their own financial decisions. Please consult a certified financial advisor before making any investment.
+              <strong className="text-slate-300 block mb-2">Disclaimer</strong>
+              StockSense is strictly an educational institute providing stock market training and classes. We do not provide financial advice, stock tips, or portfolio management services. We are not SEBI registered. All content and sessions are strictly for educational and learning purposes only. Users are entirely responsible for their own financial decisions. Please consult a SEBI-registered financial advisor before making any financial decisions.
             </div>
 
             <div className="flex flex-col md:flex-row items-center justify-between text-sm text-slate-500 gap-4">
