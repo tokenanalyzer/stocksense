@@ -58,12 +58,14 @@ async function submitLead(values: Record<string, unknown>): Promise<void> {
 
 /* ─── Form schema (shared by popup + inline form) ─────────────────────────── */
 const formSchema = z.object({
-  fullName:    z.string().min(2, "Full name must be at least 2 characters."),
-  mobile:      z.string().min(10, "Enter a valid mobile number."),
-  city:        z.string().min(2, "City is required."),
-  experience:  z.string().min(1, "Please select your experience level."),
-  intent:      z.string().min(10, "Please briefly describe what you want to learn."),
-  contactTime: z.string().min(1, "Please select the best time to contact you."),
+  fullName:       z.string().min(2, "Full name must be at least 2 characters."),
+  mobile:         z.string().regex(/^\d{10}$/, "Enter a valid 10-digit mobile number."),
+  startingCapital:z.string().optional(),
+  dematAccount:   z.string().optional(),
+  city:           z.string().min(2, "City is required."),
+  experience:     z.string().min(1, "Please select your experience level."),
+  intent:         z.string().optional(),
+  contactTime:    z.string().min(1, "Please select the best time to contact you."),
   consent: z.boolean().refine(v => v === true, "You must agree to be contacted.")
 });
 type FormValues = z.infer<typeof formSchema>;
@@ -105,8 +107,46 @@ function LeadFormFields({ form, onSubmit, submitLabel = "Request My Free Session
             <FormItem>
               <FormLabel className="text-slate-700 font-medium text-sm">Mobile Number</FormLabel>
               <FormControl>
-                <Input placeholder="+91 98765 43210" className="h-11 bg-white border-slate-200 focus:border-green-400" data-testid="input-mobile" {...field} />
+                <Input
+                  placeholder="10-digit mobile number"
+                  inputMode="numeric"
+                  maxLength={10}
+                  className="h-11 bg-white border-slate-200 focus:border-green-400"
+                  data-testid="input-mobile"
+                  {...field}
+                  onChange={e => field.onChange(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField control={form.control} name="startingCapital" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-slate-700 font-medium text-sm">Starting Capital (₹) <span className="text-slate-400 font-normal">(Optional)</span></FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. 50,000" className="h-11 bg-white border-slate-200 focus:border-green-400" data-testid="input-capital" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )} />
+          <FormField control={form.control} name="dematAccount" render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-slate-700 font-medium text-sm">Do You Have a Demat Account?</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger className="h-11 bg-white border-slate-200" data-testid="select-demat">
+                    <SelectValue placeholder="Select option" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="yes">Yes, I have one</SelectItem>
+                  <SelectItem value="no">No, not yet</SelectItem>
+                  <SelectItem value="opening">Currently opening one</SelectItem>
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )} />
