@@ -15,8 +15,9 @@
  * 7. Re-run the Replit workflow
  *
  * COLUMN LAYOUT (sheet auto-created):
- *   A: Timestamp  B: Full Name  C: Mobile  D: City
- *   E: Experience  F: Best Time  G: Intent  H: Consent  I: Status
+ *   A: Timestamp  B: Full Name  C: Mobile  D: Starting Capital
+ *   E: Demat Account  F: City  G: Experience  H: Best Time
+ *   I: Intent  J: Consent  K: Status
  */
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
@@ -27,17 +28,19 @@ var BRAND_NAME     = "StockSense";
 // ─────────────────────────────────────────────────────────────────────────────
 
 var COL = {
-  TIMESTAMP:   1,
-  FULL_NAME:   2,
-  MOBILE:      3,
-  CITY:        4,
-  EXPERIENCE:  5,
-  CONTACT_TIME:6,
-  INTENT:      7,
-  CONSENT:     8,
-  STATUS:      9
+  TIMESTAMP:       1,
+  FULL_NAME:       2,
+  MOBILE:          3,
+  STARTING_CAPITAL:4,
+  DEMAT_ACCOUNT:   5,
+  CITY:            6,
+  EXPERIENCE:      7,
+  CONTACT_TIME:    8,
+  INTENT:          9,
+  CONSENT:         10,
+  STATUS:          11
 };
-var TOTAL_COLS = 9;
+var TOTAL_COLS = 11;
 
 // ── GET — admin reads (getLeads) + health check ───────────────────────────────
 function doGet(e) {
@@ -88,18 +91,26 @@ function handleLeadSubmission(data) {
 
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_NAME);
-    var headers = ["Timestamp","Full Name","Mobile Number","City",
-                   "Experience Level","Best Time to Contact",
+    var headers = ["Timestamp","Full Name","Mobile Number",
+                   "Starting Capital (₹)","Demat Account",
+                   "City","Experience Level","Best Time to Contact",
                    "What They Want to Understand","Consent Given","Status"];
     sheet.appendRow(headers);
     sheet.getRange(1, 1, 1, TOTAL_COLS).setFontWeight("bold");
     sheet.setFrozenRows(1);
   } else {
-    // Ensure Status column header exists (for sheets created before this version)
+    // Ensure all columns exist for sheets created before this version
     var lastCol = sheet.getLastColumn();
     if (lastCol < TOTAL_COLS) {
-      sheet.getRange(1, TOTAL_COLS).setValue("Status");
-      sheet.getRange(1, TOTAL_COLS).setFontWeight("bold");
+      var existingHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+      var allHeaders = ["Timestamp","Full Name","Mobile Number",
+                        "Starting Capital (₹)","Demat Account",
+                        "City","Experience Level","Best Time to Contact",
+                        "What They Want to Understand","Consent Given","Status"];
+      for (var h = lastCol; h < TOTAL_COLS; h++) {
+        sheet.getRange(1, h + 1).setValue(allHeaders[h]);
+        sheet.getRange(1, h + 1).setFontWeight("bold");
+      }
     }
   }
 
@@ -109,14 +120,16 @@ function handleLeadSubmission(data) {
 
   sheet.appendRow([
     timestamp,
-    data.fullName    || "",
-    data.mobile      || "",
-    data.city        || "",
-    data.experience  || "",
-    data.contactTime || "",
-    data.intent      || "",
+    data.fullName        || "",
+    data.mobile          || "",
+    data.startingCapital || "",
+    formatDemat(data.dematAccount),
+    data.city            || "",
+    data.experience      || "",
+    data.contactTime     || "",
+    data.intent          || "",
     data.consent ? "Yes" : "No",
-    "New"                          // default status
+    "New"
   ]);
 
   // Email notification
@@ -146,19 +159,20 @@ function readLeads() {
 
   for (var i = 0; i < data.length; i++) {
     var r = data[i];
-    // Skip empty rows
     if (!r[0] && !r[1]) continue;
     leads.push({
-      rowIndex:    i + 2,            // 1-based sheet row (row 1 = header)
-      timestamp:   r[COL.TIMESTAMP   - 1] ? r[COL.TIMESTAMP   - 1].toString() : "",
-      fullName:    r[COL.FULL_NAME   - 1] || "",
-      mobile:      r[COL.MOBILE      - 1] || "",
-      city:        r[COL.CITY        - 1] || "",
-      experience:  r[COL.EXPERIENCE  - 1] || "",
-      contactTime: r[COL.CONTACT_TIME- 1] || "",
-      intent:      r[COL.INTENT      - 1] || "",
-      consent:     r[COL.CONSENT     - 1] || "",
-      status:      r[COL.STATUS      - 1] || "New"
+      rowIndex:        i + 2,
+      timestamp:       r[COL.TIMESTAMP        - 1] ? r[COL.TIMESTAMP - 1].toString() : "",
+      fullName:        r[COL.FULL_NAME        - 1] || "",
+      mobile:          r[COL.MOBILE           - 1] || "",
+      startingCapital: r[COL.STARTING_CAPITAL - 1] || "",
+      dematAccount:    r[COL.DEMAT_ACCOUNT    - 1] || "",
+      city:            r[COL.CITY             - 1] || "",
+      experience:      r[COL.EXPERIENCE       - 1] || "",
+      contactTime:     r[COL.CONTACT_TIME     - 1] || "",
+      intent:          r[COL.INTENT           - 1] || "",
+      consent:         r[COL.CONSENT          - 1] || "",
+      status:          r[COL.STATUS           - 1] || "New"
     });
   }
 
@@ -175,6 +189,8 @@ function buildEmailHtml(data, timestamp) {
     + "<table style='width:100%;border-collapse:collapse;font-size:15px;'>"
     + emailRow("Full Name",                    data.fullName)
     + emailRow("Mobile Number",                data.mobile)
+    + emailRow("Starting Capital (₹)",         data.startingCapital || "—")
+    + emailRow("Demat Account",                formatDemat(data.dematAccount))
     + emailRow("City",                         data.city)
     + emailRow("Experience Level",             formatExperience(data.experience))
     + emailRow("Best Time to Contact",         formatTime(data.contactTime))
@@ -190,12 +206,14 @@ function buildEmailHtml(data, timestamp) {
 
 function buildEmailPlain(data, timestamp) {
   return BRAND_NAME + " — New Lead\n\n"
-    + "Full Name:             " + (data.fullName    || "") + "\n"
-    + "Mobile Number:         " + (data.mobile      || "") + "\n"
-    + "City:                  " + (data.city        || "") + "\n"
+    + "Full Name:             " + (data.fullName        || "") + "\n"
+    + "Mobile Number:         " + (data.mobile          || "") + "\n"
+    + "Starting Capital (₹):  " + (data.startingCapital || "—") + "\n"
+    + "Demat Account:         " + formatDemat(data.dematAccount) + "\n"
+    + "City:                  " + (data.city            || "") + "\n"
     + "Experience Level:      " + formatExperience(data.experience) + "\n"
     + "Best Time to Contact:  " + formatTime(data.contactTime) + "\n"
-    + "What They Want:\n"       + (data.intent      || "") + "\n"
+    + "What They Want:\n"       + (data.intent          || "") + "\n"
     + "Consent Given:         " + (data.consent ? "Yes" : "No") + "\n"
     + "Timestamp:             " + timestamp + "\n";
 }
@@ -221,5 +239,10 @@ function formatExperience(val) {
 
 function formatTime(val) {
   var map = { morning:"Morning (10AM – 12PM)", afternoon:"Afternoon (1PM – 4PM)", evening:"Evening (5PM – 7PM)" };
+  return map[val] || val || "—";
+}
+
+function formatDemat(val) {
+  var map = { yes:"Yes, I have one", no:"No, not yet", opening:"Currently opening one" };
   return map[val] || val || "—";
 }

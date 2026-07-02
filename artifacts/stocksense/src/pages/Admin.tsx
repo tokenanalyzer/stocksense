@@ -25,26 +25,30 @@ import { Checkbox } from "@/components/ui/checkbox";
 type LeadStatus = "New" | "Contacted" | "Follow-up" | "Converted";
 
 interface Lead {
-  rowIndex:    number;
-  timestamp:   string;
-  fullName:    string;
-  mobile:      string;
-  city:        string;
-  experience:  string;
-  contactTime: string;
-  intent:      string;
-  consent:     string;
-  status:      LeadStatus;
+  rowIndex:        number;
+  timestamp:       string;
+  fullName:        string;
+  mobile:          string;
+  startingCapital: string;
+  dematAccount:    string;
+  city:            string;
+  experience:      string;
+  contactTime:     string;
+  intent:          string;
+  consent:         string;
+  status:          LeadStatus;
 }
 
 interface NewLeadForm {
-  fullName:    string;
-  mobile:      string;
-  city:        string;
-  experience:  string;
-  contactTime: string;
-  intent:      string;
-  consent:     boolean;
+  fullName:        string;
+  mobile:          string;
+  startingCapital: string;
+  dematAccount:    string;
+  city:            string;
+  experience:      string;
+  contactTime:     string;
+  intent:          string;
+  consent:         boolean;
 }
 
 /* ─── Config ────────────────────────────────────────────────────────────────── */
@@ -53,8 +57,8 @@ const ADMIN_PASSWORD  = import.meta.env.VITE_ADMIN_PASSWORD  as string | undefin
 const ADMIN_SESSION   = "stocksense_admin";
 
 const EMPTY_FORM: NewLeadForm = {
-  fullName: "", mobile: "", city: "",
-  experience: "", contactTime: "", intent: "", consent: false,
+  fullName: "", mobile: "", startingCapital: "", dematAccount: "",
+  city: "", experience: "", contactTime: "", intent: "", consent: false,
 };
 
 /* ─── API helpers ───────────────────────────────────────────────────────────── */
@@ -86,13 +90,15 @@ async function submitNewLead(form: NewLeadForm): Promise<void> {
     method: "POST",
     headers: { "Content-Type": "text/plain" },
     body: JSON.stringify({
-      fullName:    form.fullName,
-      mobile:      form.mobile,
-      city:        form.city,
-      experience:  form.experience,
-      contactTime: form.contactTime,
-      intent:      form.intent,
-      consent:     form.consent,
+      fullName:        form.fullName,
+      mobile:          form.mobile,
+      startingCapital: form.startingCapital,
+      dematAccount:    form.dematAccount,
+      city:            form.city,
+      experience:      form.experience,
+      contactTime:     form.contactTime,
+      intent:          form.intent,
+      consent:         form.consent,
     }),
     mode: "no-cors",
   });
@@ -100,11 +106,11 @@ async function submitNewLead(form: NewLeadForm): Promise<void> {
 
 /* ─── Mock data ─────────────────────────────────────────────────────────────── */
 const MOCK_LEADS: Lead[] = [
-  { rowIndex:2, timestamp:"01/06/2026 09:12:00", fullName:"Priya Sharma",  mobile:"9876543210", city:"Mumbai",    experience:"Complete Beginner",   contactTime:"Morning (10AM – 12PM)",  intent:"Want to understand basics of stock market", consent:"Yes", status:"New" },
-  { rowIndex:3, timestamp:"01/06/2026 10:34:00", fullName:"Rahul Mehta",   mobile:"9123456789", city:"Pune",      experience:"Have a Demat Account", contactTime:"Evening (5PM – 7PM)",    intent:"Opened demat but no idea what to do",      consent:"Yes", status:"Contacted" },
-  { rowIndex:4, timestamp:"01/06/2026 11:55:00", fullName:"Anjali Singh",  mobile:"9988776655", city:"Delhi",     experience:"Tried Trading",         contactTime:"Afternoon (1PM – 4PM)", intent:"Lost money, want to learn properly",        consent:"Yes", status:"Follow-up" },
-  { rowIndex:5, timestamp:"31/05/2026 14:22:00", fullName:"Vikram Nair",   mobile:"9871234560", city:"Bangalore", experience:"Learning Actively",     contactTime:"Morning (10AM – 12PM)",  intent:"Want structured curriculum",               consent:"Yes", status:"Converted" },
-  { rowIndex:6, timestamp:"31/05/2026 16:45:00", fullName:"Sneha Patel",   mobile:"9765432109", city:"Ahmedabad", experience:"Complete Beginner",     contactTime:"Evening (5PM – 7PM)",    intent:"Curious about long-term investing",        consent:"Yes", status:"New" },
+  { rowIndex:2, timestamp:"01/06/2026 09:12:00", fullName:"Priya Sharma",  mobile:"9876543210", startingCapital:"50000",  dematAccount:"Yes, I have one",       city:"Mumbai",    experience:"Complete Beginner",   contactTime:"Morning (10AM – 12PM)",  intent:"Want to understand basics of stock market", consent:"Yes", status:"New" },
+  { rowIndex:3, timestamp:"01/06/2026 10:34:00", fullName:"Rahul Mehta",   mobile:"9123456789", startingCapital:"25000",  dematAccount:"Currently opening one", city:"Pune",      experience:"Have a Demat Account", contactTime:"Evening (5PM – 7PM)",    intent:"Opened demat but no idea what to do",      consent:"Yes", status:"Contacted" },
+  { rowIndex:4, timestamp:"01/06/2026 11:55:00", fullName:"Anjali Singh",  mobile:"9988776655", startingCapital:"",       dematAccount:"No, not yet",           city:"Delhi",     experience:"Tried Trading",         contactTime:"Afternoon (1PM – 4PM)", intent:"Lost money, want to learn properly",        consent:"Yes", status:"Follow-up" },
+  { rowIndex:5, timestamp:"31/05/2026 14:22:00", fullName:"Vikram Nair",   mobile:"9871234560", startingCapital:"100000", dematAccount:"Yes, I have one",       city:"Bangalore", experience:"Learning Actively",     contactTime:"Morning (10AM – 12PM)",  intent:"Want structured curriculum",               consent:"Yes", status:"Converted" },
+  { rowIndex:6, timestamp:"31/05/2026 16:45:00", fullName:"Sneha Patel",   mobile:"9765432109", startingCapital:"10000",  dematAccount:"No, not yet",           city:"Ahmedabad", experience:"Complete Beginner",     contactTime:"Evening (5PM – 7PM)",    intent:"Curious about long-term investing",        consent:"Yes", status:"New" },
 ];
 
 /* ─── Stats ─────────────────────────────────────────────────────────────────── */
@@ -127,10 +133,11 @@ function computeStats(leads: Lead[]) {
 
 /* ─── CSV export ────────────────────────────────────────────────────────────── */
 function exportCSV(leads: Lead[]) {
-  const headers = ["Timestamp","Full Name","Mobile","City","Experience","Best Time","Intent","Consent","Status"];
+  const headers = ["Timestamp","Full Name","Mobile","Starting Capital","Demat Account","City","Experience","Best Time","Intent","Consent","Status"];
   const rows    = leads.map(l => [
-    `"${l.timestamp}"`, `"${l.fullName}"`, `"${l.mobile}"`, `"${l.city}"`,
-    `"${l.experience}"`, `"${l.contactTime}"`, `"${l.intent.replace(/"/g,'""')}"`,
+    `"${l.timestamp}"`, `"${l.fullName}"`, `"${l.mobile}"`,
+    `"${l.startingCapital}"`, `"${l.dematAccount}"`, `"${l.city}"`,
+    `"${l.experience}"`, `"${l.contactTime}"`, `"${(l.intent||"").replace(/"/g,'""')}"`,
     `"${l.consent}"`, `"${l.status}"`
   ].join(","));
   const csv  = [headers.join(","), ...rows].join("\n");
@@ -546,6 +553,10 @@ function LeadCard({ lead, token, onStatusChange }: { lead: Lead; token: string; 
         <StatusBadge status={lead.status} />
       </div>
       <p className="text-slate-500 text-xs">{lead.experience} · {lead.contactTime}</p>
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs">
+        {lead.startingCapital && <span className="text-slate-400">Capital: ₹{lead.startingCapital}</span>}
+        {lead.dematAccount    && <span className="text-slate-400">Demat: {lead.dematAccount}</span>}
+      </div>
       {lead.intent && <p className="text-slate-400 text-xs leading-relaxed line-clamp-2">{lead.intent}</p>}
       <p className="text-slate-600 text-xs">{lead.timestamp}</p>
       <div className="flex items-center justify-between pt-1">
