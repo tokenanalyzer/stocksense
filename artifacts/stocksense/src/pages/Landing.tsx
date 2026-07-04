@@ -492,6 +492,9 @@ function FadeSection({ children, className = "" }: { children: React.ReactNode; 
   );
 }
 
+/* Temporarily disabled — set back to true to re-enable the mandatory lead gate popup */
+const LEAD_GATE_ENABLED = false;
+
 /* ─── Main Landing Page ────────────────────────────────────────────────────── */
 export default function Landing() {
   const [showPopup, setShowPopup] = useState(false);
@@ -501,6 +504,9 @@ export default function Landing() {
     const alreadySubmitted = sessionStorage.getItem(SESSION_KEY) === "1";
     if (alreadySubmitted) {
       setLeadSubmitted(true);
+      return;
+    }
+    if (!LEAD_GATE_ENABLED) {
       return;
     }
     // Small delay so the page has a moment to paint before the modal appears
@@ -518,7 +524,7 @@ export default function Landing() {
 
   /* Smart book handler: closeable modal if already submitted, mandatory gate if not */
   function handleBookClick() {
-    if (leadSubmitted) {
+    if (leadSubmitted || !LEAD_GATE_ENABLED) {
       setShowBookingModal(true);
     } else {
       setShowPopup(true);
