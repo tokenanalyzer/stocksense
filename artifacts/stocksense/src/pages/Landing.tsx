@@ -70,9 +70,11 @@ function submitErrorMessage(err: unknown): string {
  */
 async function submitLead(values: Record<string, unknown>): Promise<void> {
   if (!APPS_SCRIPT_URL) {
-    // Dev fallback: log and treat as success so the gate still unlocks during testing
+    // Dev fallback: treat as success so the gate still unlocks during testing.
+    // Deliberately does not log `values` — it's the full lead payload (name,
+    // mobile, city, financial details), and console logging PII is exactly
+    // the kind of thing this codebase should not do, dev fallback or not.
     console.warn("VITE_APPS_SCRIPT_URL not set — skipping network call.");
-    console.log("Lead payload:", values);
     return;
   }
 

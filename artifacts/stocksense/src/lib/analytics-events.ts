@@ -19,7 +19,7 @@ export type CtaLocation =
   | "step_card"
   | "faq_cta"
   | "footer";
-export type WhatsappClickLocation = "footer" | "floating_button";
+type WhatsappClickLocation = "footer" | "floating_button";
 export type LeadSubmitErrorType = "timeout" | "network_error" | "invalid_response" | "backend_error";
 
 export interface AnalyticsEventParamsMap {
@@ -31,5 +31,3 @@ export interface AnalyticsEventParamsMap {
   nav_cta_click: { cta_location: CtaLocation };
   scroll_75: Record<string, never>;
 }
-
-export type AnalyticsEventName = keyof AnalyticsEventParamsMap;
