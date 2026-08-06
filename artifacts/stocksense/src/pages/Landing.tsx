@@ -29,11 +29,45 @@ import {
 } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
 import { trackEvent, useScrollDepthEvent } from "@/lib/analytics";
-import type { CtaLocation, FormLocation } from "@/lib/analytics-events";
+import type { CtaLocation, FormLocation, LeadSubmitErrorType } from "@/lib/analytics-events";
 
 /* ─── Google Apps Script endpoint ─────────────────────────────────────────── */
 const APPS_SCRIPT_URL = import.meta.env.VITE_APPS_SCRIPT_URL as string | undefined;
 
+// TEMPORARY FALLBACK — see .env.example. Forces the old direct-to-Apps-Script
+// no-cors submission instead of the /api/submit-lead proxy. Only flip this on
+// as a break-glass measure if the proxy has a live incident: a resolved
+// promise on that path does NOT confirm the backend saved the lead, so it
+// must never be the default — Google Ads conversions require a confirmed
+// save (see docs/analytics-event-taxonomy.md, lead_submit_success).
+const USE_LEGACY_LEAD_SUBMIT = import.meta.env.VITE_USE_LEGACY_LEAD_SUBMIT === "true";
+
+const SUBMIT_TIMEOUT_MS = 15_000;
+
+class LeadSubmitError extends Error {
+  errorType: LeadSubmitErrorType;
+  constructor(message: string, errorType: LeadSubmitErrorType) {
+    super(message);
+    this.name = "LeadSubmitError";
+    this.errorType = errorType;
+  }
+}
+
+const GENERIC_SUBMIT_ERROR = "Something went wrong. Please try again.";
+
+/** User-facing message for a caught submitLead() error. */
+function submitErrorMessage(err: unknown): string {
+  return err instanceof LeadSubmitError ? err.message : GENERIC_SUBMIT_ERROR;
+}
+
+/**
+ * Resolves ONLY when the backend has confirmed the lead was actually saved.
+ * Every other outcome — an error response, a timeout, an unreadable/invalid
+ * response, or any other uncertain state — throws instead. Callers rely on
+ * this: the success branch is where lead_submit_success fires (and will
+ * eventually gate the Google Ads conversion), so this function is the one
+ * place that guarantee has to hold.
+ */
 async function submitLead(values: Record<string, unknown>): Promise<void> {
   if (!APPS_SCRIPT_URL) {
     // Dev fallback: log and treat as success so the gate still unlocks during testing
@@ -41,21 +75,58 @@ async function submitLead(values: Record<string, unknown>): Promise<void> {
     console.log("Lead payload:", values);
     return;
   }
-  // Google Apps Script Web Apps redirect POST requests internally, which causes the
-  // browser to turn the POST into a GET (RFC 7231 §6.4.3) and the response body
-  // becomes HTML — not JSON — so attempting res.json() throws and shows an error.
-  //
-  // Fix: submit with mode:"no-cors". The full POST body still reaches doPost() on
-  // the Apps Script side (lead saved, email sent). The response is opaque so we
-  // cannot read it, but any completed fetch means the request got through.
-  // A genuine network failure (no internet, wrong URL) will still throw and surface
-  // the error message to the user.
-  await fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain" },
-    body: JSON.stringify(values),
-    mode: "no-cors",
-  });
+
+  if (USE_LEGACY_LEAD_SUBMIT) {
+    // Google Apps Script Web Apps redirect POST requests internally, which causes the
+    // browser to turn the POST into a GET (RFC 7231 §6.4.3) and the response body
+    // becomes HTML — not JSON — so attempting res.json() throws and shows an error.
+    // Submitting with mode:"no-cors" works around that, but the response is opaque:
+    // a resolved promise here means the request was SENT, not that it was saved.
+    await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify(values),
+      mode: "no-cors",
+    });
+    return;
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), SUBMIT_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch("/api/submit-lead", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === "AbortError") {
+      throw new LeadSubmitError("Request timed out. Please try again.", "timeout");
+    }
+    throw new LeadSubmitError("Network error. Please check your connection and try again.", "network_error");
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
+  let json: { success?: boolean; error?: string } | null;
+  try {
+    json = await response.json();
+  } catch {
+    json = null;
+  }
+
+  if (!json || typeof json.success !== "boolean") {
+    throw new LeadSubmitError("Received an unexpected response. Please try again.", "invalid_response");
+  }
+  if (!response.ok || json.success !== true) {
+    throw new LeadSubmitError(
+      json.error ? `Submission failed: ${json.error}` : "Submission failed. Please try again.",
+      "backend_error"
+    );
+  }
 }
 
 /* ─── Form schema (shared by popup + inline form) ─────────────────────────── */
@@ -345,9 +416,12 @@ function LeadGate({ onUnlock }: { onUnlock: () => void }) {
       setSubmitted(true);
       trackEvent("lead_submit_success", { form_location: "gate" });
     } catch (err) {
-      setSubmitError("Something went wrong. Please try again or refresh the page.");
+      setSubmitError(submitErrorMessage(err));
       console.error("Lead submission error:", err);
-      trackEvent("lead_submit_error", { form_location: "gate" });
+      trackEvent("lead_submit_error", {
+        form_location: "gate",
+        error_type: err instanceof LeadSubmitError ? err.errorType : undefined,
+      });
     } finally {
       setSubmitting(false);
     }
@@ -439,9 +513,12 @@ function BookingModal({ onClose }: { onClose: () => void }) {
       await submitLead({ ...values, timestamp: new Date().toISOString() });
       setSubmitted(true);
       trackEvent("lead_submit_success", { form_location: "booking_modal" });
-    } catch {
-      setSubmitError("Something went wrong. Please try again.");
-      trackEvent("lead_submit_error", { form_location: "booking_modal" });
+    } catch (err) {
+      setSubmitError(submitErrorMessage(err));
+      trackEvent("lead_submit_error", {
+        form_location: "booking_modal",
+        error_type: err instanceof LeadSubmitError ? err.errorType : undefined,
+      });
     } finally {
       setSubmitting(false);
     }
@@ -582,9 +659,12 @@ export default function Landing() {
       setLeadSubmitted(true);
       trackEvent("lead_submit_success", { form_location: "inline" });
     } catch (err) {
-      setPageSubmitError("Something went wrong. Please try again.");
+      setPageSubmitError(submitErrorMessage(err));
       console.error("Page form submission error:", err);
-      trackEvent("lead_submit_error", { form_location: "inline" });
+      trackEvent("lead_submit_error", {
+        form_location: "inline",
+        error_type: err instanceof LeadSubmitError ? err.errorType : undefined,
+      });
     } finally {
       setPageSubmitting(false);
     }

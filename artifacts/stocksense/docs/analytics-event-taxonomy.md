@@ -1,7 +1,7 @@
 # StockSense Analytics Event Taxonomy
 
-**Version:** 1.0.0
-**Status:** Frozen for Milestone 2.3 implementation
+**Version:** 1.1.0
+**Status:** Frozen for Milestone 2.3/2.4 implementation
 **Scope:** `artifacts/stocksense` (the public marketing site only — `/admin` is out of scope)
 
 This is the single source of truth for event names and parameters. Code
@@ -51,18 +51,18 @@ other way around.
 
 | Field | Value |
 |---|---|
-| **Purpose** | The core conversion event — a lead form was submitted and `submitLead()` resolved without throwing. |
-| **Trigger** | Inside each form's submit handler, immediately after `await submitLead(...)` succeeds. |
+| **Purpose** | The core conversion event — a lead form was submitted and the backend **confirmed** the lead was saved. |
+| **Trigger** | Inside each form's submit handler, immediately after `await submitLead(...)` resolves. As of Milestone 2.4, `submitLead()` only resolves when `/api/submit-lead` returns a genuine `{success:true}` from Apps Script — never on click, form open, form start, or submit-button-press alone, and never on an error, timeout, or unreadable response. See `src/pages/Landing.tsx`'s `submitLead()` doc comment for the exact contract. |
 | **Parameters** | `form_location: "gate" \| "inline" \| "booking_modal"` |
-| **Destination** | GA4 (via GTM) **and** Google Ads conversion (Milestone 2.4 — not wired yet) |
+| **Destination** | GA4 (via GTM) **and** Google Ads conversion (tag wiring is an external GTM-UI step, not yet done — but the event itself is now trustworthy enough to gate a conversion on) |
 
 ### `lead_submit_error`
 
 | Field | Value |
 |---|---|
-| **Purpose** | Distinguishes "visitor abandoned the form" from "the form actually failed to submit" — critical given the known `no-cors` silent-failure risk documented in the site audit. |
-| **Trigger** | Inside each form's submit handler's `catch` block. |
-| **Parameters** | `form_location: "gate" \| "inline" \| "booking_modal"` |
+| **Purpose** | Distinguishes "visitor abandoned the form" from "the form actually failed to submit," and (as of 1.1.0) which failure mode — critical given the known `no-cors` silent-failure risk documented in the site audit. |
+| **Trigger** | Inside each form's submit handler's `catch` block — fires for a backend error response, a timeout, an invalid/unreadable response, or a network failure. |
+| **Parameters** | `form_location: "gate" \| "inline" \| "booking_modal"`, `error_type: "timeout" \| "network_error" \| "invalid_response" \| "backend_error"` |
 | **Destination** | GA4 (via GTM) |
 
 ### `whatsapp_click`
@@ -99,4 +99,5 @@ other way around.
 
 ## Changelog
 
+- **1.1.0** (Milestone 2.4) — `lead_submit_error`'s `error_type` parameter is now populated with an enumerated set (`timeout` | `network_error` | `invalid_response` | `backend_error`) instead of being an unused optional field. `lead_submit_success`'s trigger contract tightened: it's now backed by a real server-confirmed save via `/api/submit-lead`, not just "the fetch call didn't throw." No event names or parameter shapes changed — additive/documentation-accuracy only.
 - **1.0.0** (Milestone 2.3) — initial frozen taxonomy: `gate_view`, `form_start`, `lead_submit_success`, `lead_submit_error`, `whatsapp_click`, `nav_cta_click`, `scroll_75`.

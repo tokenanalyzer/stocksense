@@ -1,5 +1,5 @@
 /**
- * Typed mirror of docs/analytics-event-taxonomy.md (v1.0.0).
+ * Typed mirror of docs/analytics-event-taxonomy.md (v1.1.0).
  *
  * This is the enforcement mechanism for "do not invent new event names
  * during coding" — trackEvent() in analytics.ts only accepts keys of
@@ -20,12 +20,13 @@ export type CtaLocation =
   | "faq_cta"
   | "footer";
 export type WhatsappClickLocation = "footer" | "floating_button";
+export type LeadSubmitErrorType = "timeout" | "network_error" | "invalid_response" | "backend_error";
 
 export interface AnalyticsEventParamsMap {
   gate_view: Record<string, never>;
   form_start: { form_location: FormLocation };
   lead_submit_success: { form_location: FormLocation };
-  lead_submit_error: { form_location: FormLocation; error_type?: string };
+  lead_submit_error: { form_location: FormLocation; error_type?: LeadSubmitErrorType };
   whatsapp_click: { click_location: WhatsappClickLocation };
   nav_cta_click: { cta_location: CtaLocation };
   scroll_75: Record<string, never>;
