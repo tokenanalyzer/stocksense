@@ -28,6 +28,8 @@ import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger
 } from "@/components/ui/accordion";
 import { Separator } from "@/components/ui/separator";
+import { trackEvent, useScrollDepthEvent } from "@/lib/analytics";
+import type { CtaLocation, FormLocation } from "@/lib/analytics-events";
 
 /* ─── Google Apps Script endpoint ─────────────────────────────────────────── */
 const APPS_SCRIPT_URL = import.meta.env.VITE_APPS_SCRIPT_URL as string | undefined;
@@ -83,16 +85,28 @@ const stagger = {
 };
 
 /* ─── Shared lead form fields ──────────────────────────────────────────────── */
-function LeadFormFields({ form, onSubmit, submitLabel = "Request My Free Session", isSubmitting = false, submitError }: {
+function LeadFormFields({ form, formLocation, onSubmit, submitLabel = "Request My Free Session", isSubmitting = false, submitError }: {
   form: ReturnType<typeof useForm<FormValues>>;
+  formLocation: FormLocation;
   onSubmit: (v: FormValues) => void;
   submitLabel?: string;
   isSubmitting?: boolean;
   submitError?: string;
 }) {
+  // form_start: fires once per form instance, on first interaction with any
+  // field. Capture phase + focus (not change) so it also catches Radix
+  // Select/Checkbox fields, whose dropdown content can portal outside the
+  // <form> DOM subtree and wouldn't reliably bubble a "change" event here.
+  const formStartFiredRef = useRef(false);
+  function handleFormInteraction() {
+    if (formStartFiredRef.current) return;
+    formStartFiredRef.current = true;
+    trackEvent("form_start", { form_location: formLocation });
+  }
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} onFocusCapture={handleFormInteraction} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField control={form.control} name="fullName" render={({ field }) => (
             <FormItem>
@@ -312,6 +326,16 @@ function LeadGate({ onUnlock }: { onUnlock: () => void }) {
     return () => { document.body.style.overflow = prev; };
   }, []);
 
+  // gate_view: fires once per mount. Ref-guarded (not just an empty dep
+  // array) so this stays correct even if StrictMode's dev-only double-invoke
+  // of effects is ever enabled — see docs/analytics-event-taxonomy.md.
+  const viewFiredRef = useRef(false);
+  useEffect(() => {
+    if (viewFiredRef.current) return;
+    viewFiredRef.current = true;
+    trackEvent("gate_view");
+  }, []);
+
   async function handleSubmit(values: FormValues) {
     setSubmitting(true);
     setSubmitError(undefined);
@@ -319,9 +343,11 @@ function LeadGate({ onUnlock }: { onUnlock: () => void }) {
       await submitLead({ ...values, timestamp: new Date().toISOString() });
       sessionStorage.setItem(SESSION_KEY, "1");
       setSubmitted(true);
+      trackEvent("lead_submit_success", { form_location: "gate" });
     } catch (err) {
       setSubmitError("Something went wrong. Please try again or refresh the page.");
       console.error("Lead submission error:", err);
+      trackEvent("lead_submit_error", { form_location: "gate" });
     } finally {
       setSubmitting(false);
     }
@@ -373,7 +399,7 @@ function LeadGate({ onUnlock }: { onUnlock: () => void }) {
           {submitted ? (
             <SuccessState onReset={onUnlock} />
           ) : (
-            <LeadFormFields form={form} onSubmit={handleSubmit} submitLabel="Submit & Access the Page" isSubmitting={isSubmitting} submitError={submitError} />
+            <LeadFormFields form={form} formLocation="gate" onSubmit={handleSubmit} submitLabel="Submit & Access the Page" isSubmitting={isSubmitting} submitError={submitError} />
           )}
         </div>
       </motion.div>
@@ -412,8 +438,10 @@ function BookingModal({ onClose }: { onClose: () => void }) {
     try {
       await submitLead({ ...values, timestamp: new Date().toISOString() });
       setSubmitted(true);
+      trackEvent("lead_submit_success", { form_location: "booking_modal" });
     } catch {
       setSubmitError("Something went wrong. Please try again.");
+      trackEvent("lead_submit_error", { form_location: "booking_modal" });
     } finally {
       setSubmitting(false);
     }
@@ -469,6 +497,7 @@ function BookingModal({ onClose }: { onClose: () => void }) {
           ) : (
             <LeadFormFields
               form={form}
+              formLocation="booking_modal"
               onSubmit={handleSubmit}
               submitLabel="Submit Request"
               isSubmitting={isSubmitting}
@@ -516,14 +545,20 @@ export default function Landing() {
     setLeadSubmitted(true);
   }
 
-  /* Smart book handler: closeable modal if already submitted, mandatory gate if not */
-  function handleBookClick() {
+  /* Smart book handler: closeable modal if already submitted, mandatory gate if not.
+     Centralized nav_cta_click tracking lives here (not in each onClick) so
+     there's exactly one place that fires the event, regardless of which of
+     the page's seven CTAs triggered it. */
+  function handleBookClick(location: CtaLocation) {
+    trackEvent("nav_cta_click", { cta_location: location });
     if (leadSubmitted) {
       setShowBookingModal(true);
     } else {
       setShowPopup(true);
     }
   }
+
+  useScrollDepthEvent();
 
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -545,9 +580,11 @@ export default function Landing() {
       sessionStorage.setItem(SESSION_KEY, "1");
       setPageFormSubmitted(true);
       setLeadSubmitted(true);
+      trackEvent("lead_submit_success", { form_location: "inline" });
     } catch (err) {
       setPageSubmitError("Something went wrong. Please try again.");
       console.error("Page form submission error:", err);
+      trackEvent("lead_submit_error", { form_location: "inline" });
     } finally {
       setPageSubmitting(false);
     }
@@ -582,7 +619,7 @@ export default function Landing() {
             </nav>
             <div className="flex items-center gap-3">
               <Button
-                onClick={handleBookClick}
+                onClick={() => handleBookClick("header")}
                 className="hidden md:inline-flex bg-green-600 hover:bg-green-700 text-white h-9 px-5 text-sm font-semibold shadow-none"
                 data-testid="button-nav-book"
               >
@@ -617,7 +654,7 @@ export default function Landing() {
                     </button>
                   ))}
                   <Button
-                    onClick={() => { handleBookClick(); setMobileMenuOpen(false); }}
+                    onClick={() => { handleBookClick("header_mobile"); setMobileMenuOpen(false); }}
                     className="mt-3 bg-green-600 hover:bg-green-700 text-white w-full font-semibold"
                     data-testid="button-nav-book-mobile"
                   >
@@ -664,7 +701,7 @@ export default function Landing() {
                 <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center justify-center gap-4">
                   <Button
                     size="lg"
-                    onClick={handleBookClick}
+                    onClick={() => handleBookClick("hero")}
                     className="w-full sm:w-auto h-13 px-9 text-base font-semibold bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-200 transition-all"
                     data-testid="button-hero-book"
                   >
@@ -862,7 +899,7 @@ export default function Landing() {
                     </div>
                     <div className="relative z-10 flex gap-3 mt-6">
                       <Button
-                        onClick={handleBookClick}
+                        onClick={() => handleBookClick("quote_card")}
                         className="bg-green-600 hover:bg-green-700 text-white text-sm px-5 h-10"
                         data-testid="button-quote-cta"
                       >
@@ -916,7 +953,7 @@ export default function Landing() {
                     {item.cta && (
                       <Button
                         size="sm"
-                        onClick={handleBookClick}
+                        onClick={() => handleBookClick("step_card")}
                         className="mt-5 bg-green-600 hover:bg-green-700 text-white"
                         data-testid="button-step-book"
                       >
@@ -1000,7 +1037,7 @@ export default function Landing() {
                     <>
                       <h3 className="text-2xl font-bold text-slate-900 mb-1">Request an Intro Session</h3>
                       <p className="text-slate-500 text-sm mb-6">Fill in your details below — takes less than a minute.</p>
-                      <LeadFormFields form={pageForm} onSubmit={handlePageSubmit} submitLabel="Request My Session" isSubmitting={pageSubmitting} submitError={pageSubmitError} />
+                      <LeadFormFields form={pageForm} formLocation="inline" onSubmit={handlePageSubmit} submitLabel="Request My Session" isSubmitting={pageSubmitting} submitError={pageSubmitError} />
                     </>
                   )}
                 </motion.div>
@@ -1068,7 +1105,7 @@ export default function Landing() {
                   <h3 className="text-2xl font-bold mb-2">Still have questions?</h3>
                   <p className="text-green-100 mb-6 text-sm">Book your free intro session and get all your questions answered personally.</p>
                   <Button
-                    onClick={handleBookClick}
+                    onClick={() => handleBookClick("faq_cta")}
                     className="bg-white text-green-700 hover:bg-green-50 font-semibold h-11 px-8"
                     data-testid="button-faq-cta"
                   >
@@ -1117,6 +1154,7 @@ export default function Landing() {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label="Chat on WhatsApp"
+                      onClick={() => trackEvent("whatsapp_click", { click_location: "footer" })}
                       className="inline-flex items-center justify-center w-10 h-10 rounded-full hover:opacity-80 transition-opacity"
                       style={{ backgroundColor: "#25D366" }}
                     >
@@ -1128,7 +1166,7 @@ export default function Landing() {
                 </ul>
                 <Button
                   size="sm"
-                  onClick={handleBookClick}
+                  onClick={() => handleBookClick("footer")}
                   className="mt-6 bg-green-600 hover:bg-green-700 text-white"
                   data-testid="button-footer-book"
                 >
@@ -1161,6 +1199,7 @@ export default function Landing() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Chat on WhatsApp"
+        onClick={() => trackEvent("whatsapp_click", { click_location: "floating_button" })}
         className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-lg hover:scale-110 transition-transform"
         style={{ backgroundColor: "#25D366" }}
       >
