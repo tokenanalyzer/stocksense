@@ -52,44 +52,52 @@ interface NewLeadForm {
 }
 
 /* ─── Config ────────────────────────────────────────────────────────────────── */
+// VITE_APPS_SCRIPT_URL is intentionally the only client-visible config here — it's
+// a URL, not a secret. The admin password and Apps Script bearer token now live
+// only in the /api/admin-* serverless functions' environment (see api/admin-login.ts
+// and api/admin-leads.ts) and are never bundled into client JS.
 const APPS_SCRIPT_URL = import.meta.env.VITE_APPS_SCRIPT_URL as string | undefined;
-const ADMIN_PASSWORD  = import.meta.env.VITE_ADMIN_PASSWORD  as string | undefined;
 const ADMIN_SESSION   = "stocksense_admin";
+
+type LoginResult = { ok: true } | { ok: false; reason: "invalid" | "not_configured" | "network" };
 
 const EMPTY_FORM: NewLeadForm = {
   fullName: "", mobile: "", startingCapital: "", dematAccount: "",
   city: "", experience: "", contactTime: "", intent: "", consent: false,
 };
 
-/* ─── API helpers ───────────────────────────────────────────────────────────── */
+/* ─── API helpers ────────────────────────────────────────────────────────────
+   These call our own /api/admin-* serverless functions, never Apps Script
+   directly — the functions hold the real Apps Script token server-side and
+   check `token` (the admin's typed password) before proxying anything. */
 async function fetchLeads(token: string): Promise<Lead[]> {
   if (!APPS_SCRIPT_URL) return MOCK_LEADS;
-  const url = `${APPS_SCRIPT_URL}?action=getLeads&token=${encodeURIComponent(token)}`;
-  const res  = await fetch(url);
-  if (!res.ok) throw new Error(`Network error ${res.status}`);
-  const json = await res.json() as { success: boolean; leads?: Lead[]; error?: string };
-  if (!json.success) throw new Error(json.error ?? "Failed to fetch leads");
+  const res  = await fetch("/api/admin-leads?action=getLeads", {
+    headers: { "x-admin-token": token },
+  });
+  const json = await res.json().catch(() => null) as { success: boolean; leads?: Lead[]; error?: string } | null;
+  if (!json || !json.success) throw new Error(json?.error ?? `Failed to fetch leads (${res.status})`);
   return json.leads ?? [];
 }
 
 async function updateLeadStatus(token: string, rowIndex: number, status: LeadStatus): Promise<void> {
   if (!APPS_SCRIPT_URL) return;
-  const res = await fetch(APPS_SCRIPT_URL, {
+  const res = await fetch("/api/admin-leads", {
     method: "POST",
-    headers: { "Content-Type": "text/plain" },
-    body: JSON.stringify({ action: "updateStatus", token, rowIndex, status }),
+    headers: { "Content-Type": "application/json", "x-admin-token": token },
+    body: JSON.stringify({ action: "updateStatus", rowIndex, status }),
   });
-  if (!res.ok) throw new Error(`Network error ${res.status}`);
-  const json = await res.json() as { success: boolean; error?: string };
-  if (!json.success) throw new Error(json.error ?? "Status update failed");
+  const json = await res.json().catch(() => null) as { success: boolean; error?: string } | null;
+  if (!json || !json.success) throw new Error(json?.error ?? `Status update failed (${res.status})`);
 }
 
-async function submitNewLead(form: NewLeadForm): Promise<void> {
+async function submitNewLead(token: string, form: NewLeadForm): Promise<void> {
   if (!APPS_SCRIPT_URL) return; // demo mode — no-op
-  await fetch(APPS_SCRIPT_URL, {
+  const res = await fetch("/api/admin-leads", {
     method: "POST",
-    headers: { "Content-Type": "text/plain" },
+    headers: { "Content-Type": "application/json", "x-admin-token": token },
     body: JSON.stringify({
+      action:          "addLead",
       fullName:        form.fullName,
       mobile:          form.mobile,
       startingCapital: form.startingCapital,
@@ -100,8 +108,9 @@ async function submitNewLead(form: NewLeadForm): Promise<void> {
       intent:          form.intent,
       consent:         form.consent,
     }),
-    mode: "no-cors",
   });
+  const json = await res.json().catch(() => null) as { success: boolean; error?: string } | null;
+  if (!json || json.success === false) throw new Error(json?.error ?? `Submission failed (${res.status})`);
 }
 
 /* ─── Mock data ─────────────────────────────────────────────────────────────── */
@@ -167,8 +176,8 @@ function StatusBadge({ status }: { status: LeadStatus }) {
 
 /* ─── Add Lead Modal ────────────────────────────────────────────────────────── */
 function AddLeadModal({
-  open, onClose, onSuccess
-}: { open: boolean; onClose: () => void; onSuccess: () => void }) {
+  open, onClose, onSuccess, token
+}: { open: boolean; onClose: () => void; onSuccess: () => void; token: string }) {
   const [form,       setForm]       = useState<NewLeadForm>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [error,      setError]      = useState("");
@@ -197,7 +206,7 @@ function AddLeadModal({
     setSubmitting(true);
     setError("");
     try {
-      await submitNewLead(form);
+      await submitNewLead(token, form);
       setDone(true);
     } catch {
       setError("Submission failed. Check your network and try again.");
@@ -386,15 +395,28 @@ function AddLeadModal({
 }
 
 /* ─── Login Screen ──────────────────────────────────────────────────────────── */
-function LoginScreen({ onLogin }: { onLogin: (pass: string) => boolean }) {
-  const [password, setPassword] = useState("");
-  const [error,    setError]    = useState("");
-  const [, setLocation]         = useLocation();
+function LoginScreen({ onLogin }: { onLogin: (pass: string) => Promise<LoginResult> }) {
+  const [password,   setPassword]   = useState("");
+  const [error,      setError]      = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [, setLocation]             = useLocation();
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const ok = onLogin(password);
-    if (!ok) { setError("Incorrect password. Try again."); setPassword(""); }
+    setSubmitting(true);
+    setError("");
+    const result = await onLogin(password);
+    setSubmitting(false);
+    if (!result.ok) {
+      setError(
+        result.reason === "not_configured"
+          ? "Admin login isn't set up yet — configure ADMIN_PASSWORD in your deployment environment."
+          : result.reason === "network"
+          ? "Couldn't reach the server. Check your connection and try again."
+          : "Incorrect password. Try again."
+      );
+      setPassword("");
+    }
   }
 
   return (
@@ -428,8 +450,8 @@ function LoginScreen({ onLogin }: { onLogin: (pass: string) => boolean }) {
                 </p>
               )}
             </div>
-            <Button type="submit" className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-semibold text-base">
-              Sign In
+            <Button type="submit" disabled={submitting} className="w-full h-11 bg-green-600 hover:bg-green-700 text-white font-semibold text-base disabled:opacity-70">
+              {submitting ? "Signing in…" : "Sign In"}
             </Button>
           </form>
         </div>
@@ -440,12 +462,6 @@ function LoginScreen({ onLogin }: { onLogin: (pass: string) => boolean }) {
         >
           <ArrowLeft className="h-4 w-4" /> Back to site
         </button>
-
-        {!ADMIN_PASSWORD && (
-          <div className="mt-5 rounded-lg bg-amber-900/30 border border-amber-800/50 px-4 py-3 text-xs text-amber-400 text-center">
-            <strong>Dev mode:</strong> Set <code>VITE_ADMIN_PASSWORD</code> in Replit Secrets to enable login.
-          </div>
-        )}
       </div>
     </div>
   );
@@ -641,13 +657,33 @@ export default function Admin() {
   const [statusFilter, setStatusFilter] = useState<"all" | LeadStatus>("all");
   const [addOpen,      setAddOpen]      = useState(false);
 
-  function handleLogin(pass: string): boolean {
-    const valid = ADMIN_PASSWORD ? pass === ADMIN_PASSWORD : pass.length > 0;
-    if (!valid) return false;
-    sessionStorage.setItem(ADMIN_SESSION, pass);
-    setToken(pass);
-    setAuthed(true);
-    return true;
+  async function handleLogin(pass: string): Promise<LoginResult> {
+    if (!APPS_SCRIPT_URL) {
+      // Demo mode — no backend configured at all; accept any non-empty password
+      // so the dashboard remains explorable with MOCK_LEADS, same as before.
+      if (pass.length === 0) return { ok: false, reason: "invalid" };
+      sessionStorage.setItem(ADMIN_SESSION, pass);
+      setToken(pass);
+      setAuthed(true);
+      return { ok: true };
+    }
+    try {
+      const res  = await fetch("/api/admin-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pass }),
+      });
+      const json = await res.json() as { success: boolean; error?: string };
+      if (!json.success) {
+        return { ok: false, reason: json.error === "not_configured" ? "not_configured" : "invalid" };
+      }
+      sessionStorage.setItem(ADMIN_SESSION, pass);
+      setToken(pass);
+      setAuthed(true);
+      return { ok: true };
+    } catch {
+      return { ok: false, reason: "network" };
+    }
   }
 
   function handleLogout() {
@@ -700,6 +736,7 @@ export default function Admin() {
         open={addOpen}
         onClose={() => setAddOpen(false)}
         onSuccess={() => { setAddOpen(false); loadLeads(); }}
+        token={token ?? ""}
       />
 
       {/* ── Top bar ── */}
@@ -775,7 +812,7 @@ export default function Admin() {
           <div className="flex items-center gap-3 rounded-xl bg-amber-900/30 border border-amber-800/50 px-5 py-3 text-xs text-amber-400">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
             <span>
-              <strong>Demo mode</strong> — set <code>VITE_APPS_SCRIPT_URL</code> + <code>VITE_ADMIN_PASSWORD</code> in Replit Secrets to connect your Google Sheet.
+              <strong>Demo mode</strong> — set <code>VITE_APPS_SCRIPT_URL</code>, <code>APPS_SCRIPT_URL</code>, <code>ADMIN_PASSWORD</code>, and <code>APPS_SCRIPT_ADMIN_TOKEN</code> in your deployment environment to connect your Google Sheet.
             </span>
           </div>
         )}
