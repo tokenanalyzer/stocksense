@@ -1,0 +1,2 @@
+week_start,spend,impressions,clicks,ctr,avg_cpc,sessions,gate_view_rate,form_start_rate,form_completion_rate,conversions_ads,cpl,total_leads,qualified_leads,cpql,show_rate,close_rate,avg_quality_score,keywords_qs_le_5,active_experiments,notes
+,,,,,,,,,,,,,,,,,,,,"Populate once Phase 2 tracking is live — see 07-reporting/kpi-dashboard-spec.md for column definitions"
