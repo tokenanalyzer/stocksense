@@ -6,11 +6,13 @@ import type { IncomingMessage, ServerResponse } from "node:http";
  * this function's environment and never sent to the browser — the client
  * only ever holds the separate, independently-rotatable ADMIN_PASSWORD.
  *
- * Apps Script Web Apps 302-redirect every request to a googleusercontent.com
- * URL. The Fetch spec downgrades a redirected POST to a GET, which silently
- * turns doPost calls into doGet calls. redirect:"manual" + a manual re-POST
- * to the Location header avoids that downgrade (this only matters for POST —
- * GET-to-GET redirects are unaffected and don't need this handling).
+ * Apps Script Web Apps run doPost() to completion — sheet writes, everything
+ * — and then 302-redirect to a script.googleusercontent.com/macros/echo URL
+ * that merely serves the already-computed output back. That echo endpoint
+ * only accepts GET/HEAD (confirmed: a re-POST to it returns 405 Method Not
+ * Allowed with an HTML body, not the JSON result), so redirect:"manual" +
+ * a manual follow-up GET (not POST) to the Location header is required to
+ * actually read the result.
  */
 
 function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown>> {
@@ -46,7 +48,7 @@ async function postToAppsScript(url: string, payload: unknown): Promise<unknown>
   if (response.status >= 300 && response.status < 400) {
     const location = response.headers.get("location");
     if (!location) throw new Error("Apps Script redirected with no Location header");
-    response = await fetch(location, { method: "POST", headers, body });
+    response = await fetch(location, { method: "GET" });
   }
 
   return response.json();

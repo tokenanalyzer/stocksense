@@ -42,11 +42,14 @@ type UpstreamResult =
   | { ok: false; reason: "timeout" | "network_error" | "invalid_response"; detail?: string };
 
 /**
- * POSTs to Apps Script and follows its redirect manually, preserving the
- * POST method and body — see api/admin-leads.ts's module doc for why this
- * is necessary (the Fetch spec downgrades a redirected POST to GET, which
- * would silently turn this into a no-op doGet call otherwise). Bounded by
- * a single timeout covering both hops.
+ * POSTs to Apps Script and follows its redirect manually. Apps Script Web
+ * Apps run doPost() to completion — sheet writes, emails, everything — and
+ * then 302-redirect to a script.googleusercontent.com/macros/echo URL that
+ * merely serves the already-computed output back. That echo endpoint only
+ * accepts GET/HEAD (confirmed: a re-POST to it returns 405 Method Not
+ * Allowed with an HTML body, not the JSON result), so the redirect must be
+ * followed with GET — not the original POST — to actually read the result.
+ * Bounded by a single timeout covering both hops.
  */
 async function postToAppsScript(url: string, payload: unknown, timeoutMs: number): Promise<UpstreamResult> {
   const controller = new AbortController();
@@ -60,7 +63,7 @@ async function postToAppsScript(url: string, payload: unknown, timeoutMs: number
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get("location");
       if (!location) return { ok: false, reason: "invalid_response", detail: "Redirect with no Location header" };
-      response = await fetch(location, { method: "POST", headers, body, signal: controller.signal });
+      response = await fetch(location, { method: "GET", signal: controller.signal });
     }
 
     let data: unknown;
