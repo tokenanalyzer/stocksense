@@ -9,10 +9,22 @@
  * 4. Click Save → Deploy → New deployment
  *      Type: Web app | Execute as: Me | Who has access: Anyone
  * 5. Copy the Web App URL
- * 6. In Replit Secrets, set:
- *      VITE_APPS_SCRIPT_URL = <Web App URL>
- *      VITE_ADMIN_PASSWORD  = <same as ADMIN_PASSWORD below>
- * 7. Re-run the Replit workflow
+ * 6. In your hosting environment (Vercel/Replit), set these as SERVER-ONLY
+ *    variables — no VITE_ prefix, they must never be readable by the browser:
+ *      APPS_SCRIPT_URL          = <Web App URL>
+ *      APPS_SCRIPT_ADMIN_TOKEN  = <same value as ADMIN_PASSWORD below>
+ *      ADMIN_PASSWORD           = <a different, separately-chosen password —
+ *                                  this is what you type into /admin; it does
+ *                                  NOT need to match ADMIN_PASSWORD below>
+ *    Also set the client-visible VITE_APPS_SCRIPT_URL = <Web App URL> (this
+ *    one is fine to expose — it's a URL, not a secret; the homepage lead form
+ *    uses it directly).
+ * 7. Redeploy
+ *
+ * Rotating ADMIN_PASSWORD below? Update APPS_SCRIPT_ADMIN_TOKEN in your
+ * hosting environment to match, then redeploy this script. The two no longer
+ * need to be typed by hand anywhere — /api/admin-login.ts and
+ * /api/admin-leads.ts (in the stocksense app) hold both server-side.
  *
  * COLUMN LAYOUT (sheet auto-created):
  *   A: Timestamp  B: Full Name  C: Mobile  D: Starting Capital
@@ -22,7 +34,7 @@
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────
 var NOTIFY_EMAIL   = "stocksense00@gmail.com"; // ← your Gmail
-var ADMIN_PASSWORD = "CHANGE_ME_NOW";         // ← must match VITE_ADMIN_PASSWORD
+var ADMIN_PASSWORD = "CHANGE_ME_NOW";         // ← must match APPS_SCRIPT_ADMIN_TOKEN (server-only)
 var SHEET_NAME     = "StockSense Leads";
 var BRAND_NAME     = "StockSense";
 // ─────────────────────────────────────────────────────────────────────────────
