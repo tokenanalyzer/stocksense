@@ -1,0 +1,16 @@
+{
+  "projectId": "prj_fErSwFWuDs6UTXYUlkPCp7iUgrf5",
+  "orgId": "team_SMDIPLTo7h0PRonQWg0MS0MH",
+  "projectName": "stocksense-landing",
+  "settings": {
+    "createdAt": 1780417559690,
+    "framework": "vite",
+    "devCommand": null,
+    "installCommand": "pnpm install --no-frozen-lockfile",
+    "buildCommand": "pnpm install --no-frozen-lockfile && pnpm --filter @workspace/stocksense run build",
+    "outputDirectory": "artifacts/stocksense/dist/public",
+    "rootDirectory": "artifacts/stocksense",
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
+}
