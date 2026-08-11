@@ -50,8 +50,8 @@ export async function getSheetsMetrics(
   }
 
   const auth = await getGoogleJwtClient(SHEETS_SCOPE);
-  const options: sheets_v4.Options = { version: "v4", auth };
-  const sheets = google.sheets(options);
+  // Asserted rather than passed as a plain literal — see ga4Client.ts for why.
+  const sheets = google.sheets({ version: "v4", auth } as sheets_v4.Options);
 
   const resp = await sheets.spreadsheets.values.batchGet({
     spreadsheetId,

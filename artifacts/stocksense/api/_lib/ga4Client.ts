@@ -56,8 +56,12 @@ export async function getGa4Metrics(
   }
 
   const auth = await getGoogleJwtClient(GA4_SCOPE);
-  const options: analyticsdata_v1beta.Options = { version: "v1beta", auth };
-  const analyticsdata = google.analyticsdata(options);
+  // Asserted rather than passed as a plain literal: googleapis' own generated
+  // Options types have been observed to fail TS's excess-property check for
+  // `auth` in some toolchain/platform combinations even though `auth` is a
+  // real, documented member (inherited from GlobalOptions) — see ga4Client
+  // build-failure investigation, 2026-08-11.
+  const analyticsdata = google.analyticsdata({ version: "v1beta", auth } as analyticsdata_v1beta.Options);
 
   const totalsResp = await analyticsdata.properties.runReport({
     property: `properties/${propertyId}`,
@@ -112,7 +116,7 @@ async function getTrafficSources(
     },
   });
 
-  return (resp.data.rows ?? []).map((row) => ({
+  return (resp.data.rows ?? []).map((row: analyticsdata_v1beta.Schema$Row) => ({
     source: row.dimensionValues?.[0]?.value ?? "(unknown)",
     medium: row.dimensionValues?.[1]?.value ?? "(unknown)",
     sessions: Number(row.metricValues?.[0]?.value ?? 0),
@@ -135,7 +139,7 @@ async function getLandingPages(
     },
   });
 
-  return (resp.data.rows ?? []).map((row) => ({
+  return (resp.data.rows ?? []).map((row: analyticsdata_v1beta.Schema$Row) => ({
     path: row.dimensionValues?.[0]?.value ?? "(unknown)",
     sessions: Number(row.metricValues?.[0]?.value ?? 0),
     conversions: Number(row.metricValues?.[1]?.value ?? 0),
