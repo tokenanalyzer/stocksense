@@ -192,12 +192,19 @@ async function callClaude(snapshot: MarketingSnapshot, extraInstruction?: string
   return result.success ? result.data : null;
 }
 
-// TEMPORARY diagnostic instrumentation (2026-08-11) — remove once the
-// analysis_provider_unavailable root cause is confirmed. Logs only a safe
-// error classification (constructor name, HTTP status, Anthropic's own
-// semantic error.type e.g. invalid_request_error/authentication_error/
-// overloaded_error, and the opaque requestID). Never logs err.message,
-// err.error (raw response body), err.headers, credentials, or API keys.
+// TEMPORARY diagnostic instrumentation (2026-08-11, extended 2026-08-12) —
+// remove once the analysis_provider_unavailable root cause is confirmed.
+// Logs a safe error classification (constructor name, HTTP status,
+// Anthropic's own semantic error.type e.g. invalid_request_error/
+// authentication_error/overloaded_error, and the opaque requestID). Never
+// logs request/response bodies, headers, credentials, or API keys.
+//
+// TEMPORARY (2026-08-12): also logs err.message for 400 invalid_request_error
+// specifically, to identify the exact rejected schema field. Anthropic's 400
+// validation messages for this error type only ever quote schema paths/
+// property names (e.g. "schema.properties.X is not supported") — never
+// request content, snapshot data, lead data, or secrets. Remove this extra
+// log line once the root cause is confirmed.
 function logClaudeErrorSafely(err: unknown): void {
   if (err instanceof Anthropic.APIError) {
     console.error("[analysisEngine] Claude API call failed:", {
@@ -206,6 +213,10 @@ function logClaudeErrorSafely(err: unknown): void {
       anthropicErrorType: err.type,
       requestId: err.requestID,
     });
+    if (err.status === 400 && err.type === "invalid_request_error") {
+      // TEMPORARY — see comment above. Safe: schema-validation message only.
+      console.error("[analysisEngine] TEMP DIAGNOSTIC invalid_request_error message:", err.message);
+    }
     return;
   }
   console.error("[analysisEngine] Claude API call failed:", {
