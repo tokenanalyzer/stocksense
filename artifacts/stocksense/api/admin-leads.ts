@@ -63,8 +63,10 @@ async function requestAppsScript(
     response = await fetch(location, { method: "GET" });
   }
 
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) {
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch {
     // TEMPORARY diagnostic instrumentation (2026-08-12) — remove once the
     // admin-leads non-JSON-upstream-response root cause is confirmed. Logs
     // only safe metadata: HTTP status, content-type, whether a redirect was
@@ -72,14 +74,12 @@ async function requestAppsScript(
     // response bodies, tokens, or lead PII.
     console.error(`[admin-leads] ${context}: Apps Script returned non-JSON response`, {
       status: response.status,
-      contentType,
+      contentType: response.headers.get("content-type") ?? "",
       redirected,
       finalUrl: stripQuery(response.url || url),
     });
     throw new Error(`Apps Script returned a non-JSON response (status ${response.status})`);
   }
-
-  return response.json();
 }
 
 async function postToAppsScript(url: string, payload: unknown): Promise<unknown> {
