@@ -39,19 +39,59 @@ function getToken(req: IncomingMessage): string {
   return header ?? "";
 }
 
-async function postToAppsScript(url: string, payload: unknown): Promise<unknown> {
-  const body = JSON.stringify(payload);
-  const headers = { "Content-Type": "text/plain" };
+function stripQuery(url: string): string {
+  try {
+    const u = new URL(url);
+    return `${u.origin}${u.pathname}`;
+  } catch {
+    return "invalid-url";
+  }
+}
 
-  let response = await fetch(url, { method: "POST", headers, body, redirect: "manual" });
+async function requestAppsScript(
+  url: string,
+  init: { method: "GET" | "POST"; headers?: Record<string, string>; body?: string },
+  context: string,
+): Promise<unknown> {
+  let response = await fetch(url, { ...init, redirect: "manual" });
+  let redirected = false;
 
   if (response.status >= 300 && response.status < 400) {
     const location = response.headers.get("location");
     if (!location) throw new Error("Apps Script redirected with no Location header");
+    redirected = true;
     response = await fetch(location, { method: "GET" });
   }
 
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    // TEMPORARY diagnostic instrumentation (2026-08-12) — remove once the
+    // admin-leads non-JSON-upstream-response root cause is confirmed. Logs
+    // only safe metadata: HTTP status, content-type, whether a redirect was
+    // followed, and the final URL with query/token stripped. Never logs
+    // response bodies, tokens, or lead PII.
+    console.error(`[admin-leads] ${context}: Apps Script returned non-JSON response`, {
+      status: response.status,
+      contentType,
+      redirected,
+      finalUrl: stripQuery(response.url || url),
+    });
+    throw new Error(`Apps Script returned a non-JSON response (status ${response.status})`);
+  }
+
   return response.json();
+}
+
+async function postToAppsScript(url: string, payload: unknown): Promise<unknown> {
+  return requestAppsScript(
+    url,
+    { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(payload) },
+    "postToAppsScript",
+  );
+}
+
+async function getLeadsFromAppsScript(url: string): Promise<unknown> {
+  return requestAppsScript(url, { method: "GET" }, "getLeads");
 }
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
@@ -76,10 +116,10 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         sendJson(res, 400, { success: false, error: "Unknown action" });
         return;
       }
-      const upstream = await fetch(
+      const result = await getLeadsFromAppsScript(
         `${appsScriptUrl}?action=getLeads&token=${encodeURIComponent(appsScriptToken)}`
       );
-      sendJson(res, 200, await upstream.json());
+      sendJson(res, 200, result);
       return;
     }
 
