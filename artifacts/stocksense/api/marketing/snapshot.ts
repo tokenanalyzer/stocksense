@@ -72,6 +72,25 @@ export async function buildMarketingSnapshot(rangeParam: string | null): Promise
     getSheetsMetrics(previousPeriod, currentPeriod),
   ]);
 
+  // TEMPORARY diagnostic instrumentation (2026-08-11) — remove once the GA4
+  // "unavailable" root cause is confirmed. Logs only a safe error
+  // classification (constructor name, HTTP status, Google's own semantic
+  // error status string e.g. PERMISSION_DENIED/INVALID_ARGUMENT/
+  // RESOURCE_EXHAUSTED). Never logs credentials, tokens, GA4_PROPERTY_ID,
+  // request/response bodies, or any other field that could carry them.
+  if (ga4Result.status === "rejected") {
+    const reason = ga4Result.reason as {
+      name?: string;
+      code?: number | string;
+      response?: { status?: number; data?: { error?: { status?: string; code?: number } } };
+    } | null;
+    console.error("[marketing/snapshot] GA4 fetch failed:", {
+      errorName: reason?.name ?? typeof ga4Result.reason,
+      httpStatus: reason?.response?.status ?? (typeof reason?.code === "number" ? reason.code : undefined),
+      googleErrorStatus: reason?.response?.data?.error?.status,
+    });
+  }
+
   const now = new Date().toISOString();
 
   const ads = {

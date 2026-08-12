@@ -49,7 +49,7 @@ const ANALYSIS_JSON_SCHEMA = {
         properties: {
           statement: { type: "string" },
           relatedTo: { type: "array", items: { type: "string" } },
-          confidence: { type: "string", enum: ["low", "medium", "high"] },
+          confidence: { type: "string", description: "one of: low, medium, high" },
         },
         required: ["statement", "relatedTo", "confidence"],
         additionalProperties: false,
@@ -61,7 +61,7 @@ const ANALYSIS_JSON_SCHEMA = {
         type: "object",
         properties: {
           statement: { type: "string" },
-          severity: { type: "string", enum: ["low", "medium", "high"] },
+          severity: { type: "string", description: "one of: low, medium, high" },
           relatedAnomalies: { type: "array", items: { type: "string" } },
           timePeriod: { type: "string" },
         },
@@ -192,7 +192,29 @@ async function callClaude(snapshot: MarketingSnapshot, extraInstruction?: string
   return result.success ? result.data : null;
 }
 
+// TEMPORARY diagnostic instrumentation (2026-08-11) — remove once the
+// analysis_provider_unavailable root cause is confirmed. Logs only a safe
+// error classification (constructor name, HTTP status, Anthropic's own
+// semantic error.type e.g. invalid_request_error/authentication_error/
+// overloaded_error, and the opaque requestID). Never logs err.message,
+// err.error (raw response body), err.headers, credentials, or API keys.
+function logClaudeErrorSafely(err: unknown): void {
+  if (err instanceof Anthropic.APIError) {
+    console.error("[analysisEngine] Claude API call failed:", {
+      errorName: err.name,
+      httpStatus: err.status,
+      anthropicErrorType: err.type,
+      requestId: err.requestID,
+    });
+    return;
+  }
+  console.error("[analysisEngine] Claude API call failed:", {
+    errorName: err instanceof Error ? err.name : typeof err,
+  });
+}
+
 function mapClaudeError(err: unknown): AnalysisError {
+  logClaudeErrorSafely(err);
   if (err instanceof Anthropic.RateLimitError) {
     return new AnalysisError("analysis_rate_limited", "Rate limited by AI provider");
   }
