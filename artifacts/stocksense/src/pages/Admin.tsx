@@ -564,7 +564,7 @@ function LeadTableRow({ lead, token, onStatusChange }: { lead: Lead; token: stri
       </TableCell>
       <TableCell className="py-3">
         <div className="flex items-center gap-1.5">
-          <a href={`https://wa.me/${lead.mobile.replace(/\D/g,"")}?text=${waMsg}`} target="_blank" rel="noopener noreferrer" title="WhatsApp">
+          <a href={`https://wa.me/${String(lead.mobile ?? "").replace(/\D/g,"")}?text=${waMsg}`} target="_blank" rel="noopener noreferrer" title="WhatsApp">
             <Button size="icon" variant="ghost" className="h-7 w-7 text-green-400 hover:text-green-300 hover:bg-green-900/30">
               <MessageCircle className="h-4 w-4" />
             </Button>
@@ -624,7 +624,7 @@ function LeadCard({ lead, token, onStatusChange }: { lead: Lead; token: string; 
           </SelectContent>
         </Select>
         <div className="flex gap-2">
-          <a href={`https://wa.me/${lead.mobile.replace(/\D/g,"")}?text=${waMsg}`} target="_blank" rel="noopener noreferrer">
+          <a href={`https://wa.me/${String(lead.mobile ?? "").replace(/\D/g,"")}?text=${waMsg}`} target="_blank" rel="noopener noreferrer">
             <Button size="sm" className="h-8 bg-green-700 hover:bg-green-600 text-white gap-1.5 text-xs">
               <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
             </Button>
@@ -717,7 +717,7 @@ export default function Admin() {
   const filtered = useMemo(() => leads
     .filter(l => {
       const nameMatch   = l.fullName.toLowerCase().includes(searchName.toLowerCase());
-      const mobileMatch = l.mobile.includes(searchMobile.replace(/\s/g,""));
+      const mobileMatch = String(l.mobile ?? "").includes(searchMobile.replace(/\s/g,""));
       const statusMatch = statusFilter === "all" || l.status === statusFilter;
       return nameMatch && mobileMatch && statusMatch;
     })
