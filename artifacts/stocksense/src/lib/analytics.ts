@@ -22,7 +22,7 @@ declare global {
  * Google Ads conversion action for successful lead submissions.
  */
 const GOOGLE_ADS_LEAD_CONVERSION =
-  "AW-18396922377/qw1ICTIdpuQcEImEq8RE";
+  "AW-18396922377/qw1CITdpuQcEImEq8RE";
 
 /**
  * Pushes a frozen-taxonomy event to the dataLayer.
